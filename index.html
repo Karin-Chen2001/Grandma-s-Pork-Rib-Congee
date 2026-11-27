@@ -1,339 +1,2340 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>奶奶的排骨粥繪本</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧教育繪本創作工坊 | Smart Educational Picture Book Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Serif TC & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <!-- PptxGenJS for 16:9 PPTX Export -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <!-- html2canvas & jsPDF for Printable Pedagogical PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#FDFBF7',
+            paperDark: '#F4EFE6',
+            terracotta: '#C86D51',
+            terracottaDark: '#B0583E',
+            sage: '#5F7A61',
+            sageLight: '#EBF1EB',
+            ink: '#2C302E',
+            inkMuted: '#686D6A',
+            borderWarm: '#E6E0D6'
+          },
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Noto Serif TC"', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 引入開源芫荽注音體 (Bpmf Iansui) WebFont */
+    @font-face {
+      font-family: 'BpmfIansui';
+      src: url('https://cdn.jsdelivr.net/gh/ButTaiwan/bpmfvs@master/fonts/BpmfIansui-Regular.woff2') format('woff2'),
+           url('https://raw.githubusercontent.com/ButTaiwan/bpmfvs/master/fonts/BpmfIansui-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    .zhuyin-font,
+    .zhuyin-font * {
+      font-family: 'BpmfIansui', 'Noto Sans TC', sans-serif !important;
+      line-height: 2.15 !important;
+      letter-spacing: 0.04em;
+    }
+
+    body {
+      background-color: #FDFBF7;
+      color: #2C302E;
+      font-family: 'Noto Sans TC', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* 書本跨頁中縫立體陰影與紙張質感 */
+    .book-spread {
+      background: #FDFBF7;
+      box-shadow: 0 20px 45px -15px rgba(44, 48, 46, 0.14), 0 0 1px 1px rgba(44, 48, 46, 0.08);
+      position: relative;
+    }
+    .book-spine-shadow {
+      background: linear-gradient(90deg, 
+        rgba(0,0,0,0) 0%, 
+        rgba(44,38,35,0.04) 45%, 
+        rgba(44,38,35,0.14) 50%, 
+        rgba(44,38,35,0.04) 55%, 
+        rgba(0,0,0,0) 100%);
+    }
+
+    /* 保留換行排版規範 */
+    .story-typography {
+      white-space: pre-line;
+      line-height: 1.85;
+      letter-spacing: 0.02em;
+    }
+
+    /* 克漏字填空輸入框 */
+    .cloze-input {
+      border-bottom: 2px solid #C86D51;
+      background-color: rgba(200, 109, 81, 0.08);
+      color: #2C302E;
+      font-weight: 600;
+      text-align: center;
+      padding: 2px 8px;
+      margin: 0 4px;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .cloze-input:focus {
+      background-color: rgba(200, 109, 81, 0.18);
+      box-shadow: 0 2px 0 0 #C86D51;
+    }
+    .cloze-input.correct {
+      border-bottom-color: #2E7D32;
+      background-color: #E8F5E9;
+      color: #1B5E20;
+    }
+    .cloze-input.wrong {
+      border-bottom-color: #C62828;
+      background-color: #FFEBEE;
+      color: #B71C1C;
+      animation: shake 0.35s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* 穩定 16:9 全螢幕容器適配規範 */
+    #fullscreenStage:fullscreen,
+    #fullscreenStage:-webkit-full-screen {
+      background-color: #1E201F;
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2vh 2vw;
+      width: 100vw;
+      height: 100vh;
+    }
+    #fullscreenStage:fullscreen .reader-aspect-box,
+    #fullscreenStage:-webkit-full-screen .reader-aspect-box {
+      width: 100%;
+      max-width: min(94vw, calc(84vh * 16 / 9));
+      aspect-ratio: 16 / 9;
+      max-height: 84vh;
+      margin: auto;
+    }
+    #fullscreenStage:fullscreen .fs-toolbar,
+    #fullscreenStage:-webkit-full-screen .fs-toolbar {
+      background: rgba(253, 251, 247, 0.96);
+      padding: 8px 20px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    /* PDF 離線渲染隱藏舞台 */
+    #pdfRenderStage {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      z-index: -50;
+      background: #FFFFFF;
+    }
+    .grayscale-ink {
+      filter: grayscale(100%) contrast(115%);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-terracotta/20 selection:text-terracottaDark">
+
+  <!-- 頂部導覽列与三階段指示器 -->
+  <header class="sticky top-0 z-30 bg-paper/95 backdrop-blur-md border-b border-borderWarm px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <!-- 品牌標誌 -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-terracotta text-white flex items-center justify-center shadow-sm font-serif font-bold text-xl">
+          繪
+        </div>
+        <div>
+          <h1 class="font-serif font-bold text-lg sm:text-xl text-ink tracking-tight">智慧教育繪本創作工坊</h1>
+          <p class="text-xs text-inkMuted hidden sm:block">Gemini Canvas 原生教學有聲繪本與學習單系統</p>
+        </div>
+      </div>
+
+      <!-- 三階段進度切換器 (極簡按鈕) -->
+      <nav class="flex items-center gap-1 sm:gap-2 bg-paperDark p-1.5 rounded-xl border border-borderWarm">
+        <button onclick="trySwitchStep(1)" id="stepBtn1" class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 bg-white text-terracotta shadow-sm">
+          <span>1. 教學設定</span>
+        </button>
+        <span class="text-inkMuted/40">›</span>
+        <button onclick="trySwitchStep(2)" id="stepBtn2" class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-inkMuted hover:text-ink">
+          <span>2. 大綱編修</span>
+        </button>
+        <span class="text-inkMuted/40">›</span>
+        <button onclick="trySwitchStep(3)" id="stepBtn3" class="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-inkMuted hover:text-ink">
+          <span>3. 有聲繪本</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主內容工作區 -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 sm:py-8">
+
+    <!-- ==================== 階段 1：參數輸入與教學設定 ==================== -->
+    <section id="step1Section" class="space-y-6">
+      <div class="bg-white rounded-2xl border border-borderWarm p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-borderWarm">
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl font-bold text-ink">階段一：課程參數與繪本風格設定</h2>
+            <p class="text-sm text-inkMuted mt-1">直接使用 Gemini Canvas 原生 AI 生成，免設定外接金鑰</p>
+          </div>
+          <!-- 教學範例快速載入 (極簡按鈕) -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-medium text-inkMuted">範例：</span>
+            <button onclick="loadPreset('water')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-paperDark hover:bg-borderWarm text-ink transition">💧 小水滴旅行</button>
+            <button onclick="loadPreset('emotion')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-paperDark hover:bg-borderWarm text-ink transition">🦊 小狐狸生氣了</button>
+            <button onclick="loadPreset('bilingual')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-paperDark hover:bg-borderWarm text-ink transition">🌱 森林種子 (英)</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6">
+          <!-- 左側：基本教學參數 -->
+          <div class="lg:col-span-5 space-y-5">
+            <div>
+              <label class="block text-sm font-semibold text-ink mb-1.5">繪本主標題</label>
+              <input id="inputBookTitle" type="text" value="小水滴的奇幻旅程" placeholder="例如：小水滴的奇幻旅程"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm transition" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-semibold text-ink mb-1.5">指導教師 / 作者</label>
+                <input id="inputAuthor" type="text" value="王老師" placeholder="教師姓名"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-ink mb-1.5">適用學段分級</label>
+                <select id="inputAudience" class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm">
+                  <option value="early">幼兒啟蒙 (3-6歲)</option>
+                  <option value="junior" selected>國小初階 (7-9歲)</option>
+                  <option value="senior">國小高年級 (10-12歲)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-semibold text-ink mb-1.5">教學語系</label>
+                <select id="inputLanguage" class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm">
+                  <option value="zh-TW" selected>繁體中文 (臺灣)</option>
+                  <option value="en-US">美式英語 (English)</option>
+                  <option value="bilingual">中英雙語對照</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-ink mb-1.5">預計頁數 (3–12頁)</label>
+                <select id="inputPageCount" class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm">
+                  <option value="4">4 頁 (起承轉合短篇)</option>
+                  <option value="6">6 頁 (標準篇章)</option>
+                  <option value="8">8 頁 (進階敘事)</option>
+                  <option value="10" selected>10 頁 (完整教學繪本 - 預設)</option>
+                  <option value="12">12 頁 (深度專題繪本)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 自由填寫繪本視覺風格 -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-sm font-semibold text-ink">繪本視覺風格描述（自由填寫）</label>
+                <span class="text-xs text-terracotta font-medium">開放式風格</span>
+              </div>
+              <input id="inputArtStyle" type="text" value="溫暖柔和的兒童繪本水彩插畫風，帶有細膩紙張紋理與柔和晨光"
+                placeholder="自由輸入任何風格，例如：溫暖手繪蠟筆、臺灣在地水彩風、剪紙拼貼風..."
+                class="w-full px-3.5 py-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm transition" />
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <button type="button" onclick="setQuickStyle('溫暖柔和的兒童繪本水彩插畫風，細膩紙張紋理与柔和光影')" class="text-xs px-2.5 py-1 rounded-md bg-paperDark hover:bg-borderWarm text-inkMuted transition">🎨 溫暖水彩</button>
+                <button type="button" onclick="setQuickStyle('童趣手繪粉彩與蠟筆質感插畫，色彩明亮溫馨，線條柔和')" class="text-xs px-2.5 py-1 rounded-md bg-paperDark hover:bg-borderWarm text-inkMuted transition">🖍️ 手繪蠟筆</button>
+                <button type="button" onclick="setQuickStyle('臺灣在地人文風景繪本插畫，莫蘭迪暖色調，細膩自然筆觸')" class="text-xs px-2.5 py-1 rounded-md bg-paperDark hover:bg-borderWarm text-inkMuted transition">🌿 在地人文</button>
+                <button type="button" onclick="setQuickStyle('自然科學圖鑑手繪線稿加水彩渲染，清晰呈現細節與生態背景')" class="text-xs px-2.5 py-1 rounded-md bg-paperDark hover:bg-borderWarm text-inkMuted transition">🔍 科學圖繪</button>
+              </div>
+            </div>
+
+            <!-- 前置填空練習模式開關 -->
+            <div class="p-4 rounded-xl bg-sageLight/60 border border-sage/30 flex items-start gap-3.5">
+              <input id="inputClozeToggle" type="checkbox" checked
+                class="mt-1 w-5 h-5 accent-sage rounded cursor-pointer" />
+              <label for="inputClozeToggle" class="cursor-pointer select-none">
+                <span class="block text-sm font-bold text-ink">開啟填空練習模式（鷹架學習）</span>
+                <span class="block text-xs text-inkMuted mt-0.5">生成時同步萃取核心詞彙與課堂引導提問，支援互動克漏字與學習單匯出；關閉則為純享讀本。</span>
+              </label>
+            </div>
+
+            <!-- 開啟注音模式開關 (芫荽注音體 Bpmf Iansui) -->
+            <div class="p-4 rounded-xl bg-terracotta/10 border border-terracotta/30 flex items-start gap-3.5">
+              <input id="inputZhuyinToggle" type="checkbox" onchange="toggleZhuyinSetting(this.checked)"
+                class="mt-1 w-5 h-5 accent-terracotta rounded cursor-pointer" />
+              <label for="inputZhuyinToggle" class="cursor-pointer select-none">
+                <span class="block text-sm font-bold text-ink">ㄅㄆㄇ 開啟注音模式（芫荽注音體 Bpmf Iansui）</span>
+                <span class="block text-xs text-inkMuted mt-0.5">啟用後，有聲繪本閱讀器、下載之離線 HTML 與 PDF 學習單/讀本將自動套用「芫荽注音體」呈現。</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 右側：故事主題或課文輸入 -->
+          <div class="lg:col-span-7 flex flex-col">
+            <label class="block text-sm font-semibold text-ink mb-1.5">課程主題描述 或 貼上課文內容</label>
+            <textarea id="inputStorySource" rows="11"
+              placeholder="請輸入教學主題或直接貼上課文段落..."
+              class="w-full flex-1 p-4 rounded-xl border border-borderWarm bg-paper focus:bg-white focus:border-terracotta outline-none text-sm leading-relaxed transition resize-none">小水滴住在蔚藍寬廣的大海裡，每天和魚兒一起隨著海浪輕輕搖擺。
+有一天，溫暖的太陽公公高高掛在天空，金黃色的陽光灑在海面上。
+小水滴覺得身體變得暖洋洋、輕飄飄的，化作看不見的水蒸氣，慢慢地往天空升起。
+越飛越高，空氣變得涼涼的，小水滴凝結成細小的水珠，和成千上萬的同伴手牽手聚在一起，變成了一朵潔白柔軟的白雲。
+微風吹來，帶著白雲飄過翠綠的高山與廣闊的平原，小水滴在空中俯瞰美麗的大地。
+漸漸地，雲朵裡的小水滴越聚越多，白雲變得又厚又重，穿上了灰暗色的烏雲外衣。
+轟隆隆！雷公公敲響了大鼓，冰冷的風吹過，小水滴再也抓不住同伴的手。
+嘩啦嘩啦！小水滴從高高的天空落下來，化為滋潤大地的甘甜雨水。
+雨水滴在乾渴的泥土上，洗淨了翠綠的樹葉，也讓路邊的小花開心地綻放笑臉。
+最後，小水滴順著山間清澈的小溪，一路唱著歌流回溫暖的大海，期待下一次的奇幻旅程。</textarea>
+
+            <!-- 底部生成操作列 -->
+            <div class="mt-5 flex items-center justify-end gap-3">
+              <button id="btnGenerateOutline" onclick="handleGenerateOutline()"
+                class="px-6 py-3 rounded-xl bg-terracotta hover:bg-terracottaDark text-white font-semibold text-sm shadow-sm transition flex items-center gap-2">
+                <span>✨ 生成分鏡大綱</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 階段 2：大綱編修與 AI 協同調整 ==================== -->
+    <section id="step2Section" class="hidden space-y-6">
+      <!-- 頂部工具列 -->
+      <div class="bg-white rounded-2xl border border-borderWarm p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h2 class="font-serif text-xl sm:text-2xl font-bold text-ink">階段二：分鏡大綱編修與封面設定</h2>
+            <span id="step2ClozeBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sageLight text-sage">已啟用填空練習</span>
+          </div>
+          <p class="text-xs sm:text-sm text-inkMuted mt-1">可自由換行排版、結合 AI 增減分鏡；確認後將一併生成全書 AI 插圖與 Gemini TTS 語音</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="trySwitchStep(1)" class="px-4 py-2.5 rounded-xl border border-borderWarm hover:bg-paperDark text-ink text-sm font-medium transition">
+            ← 返回設定
+          </button>
+          <button onclick="aiExtendNewPage()" id="btnAiExtend" class="px-4 py-2.5 rounded-xl bg-sageLight hover:bg-sage/20 text-sage font-semibold text-sm transition flex items-center gap-1.5">
+            <span>✨ AI 延展分鏡</span>
+          </button>
+          <button onclick="handleConfirmAndSynthesizeAll()" id="btnConfirmOutline" class="px-6 py-2.5 rounded-xl bg-terracotta hover:bg-terracottaDark text-white font-semibold text-sm shadow-sm transition flex items-center gap-2">
+            <span>✔ 確認大綱並生成繪本</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 專屬封面設定卡 -->
+      <div class="bg-white rounded-2xl border-2 border-terracotta/40 p-5 sm:p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <span class="px-3 py-1 rounded-lg bg-terracotta/15 text-terracottaDark font-bold text-xs tracking-wide">📖 專屬封面設定 (Cover)</span>
+          <span class="text-xs text-inkMuted">風格：<strong id="coverStylePreview" class="text-ink"></strong></span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div class="md:col-span-4 space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-inkMuted mb-1">繪本主標題</label>
+              <input id="coverTitleInput" type="text" oninput="markCoverDirty()" class="w-full px-3 py-2 rounded-lg border border-borderWarm bg-paper text-sm font-bold text-ink" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-inkMuted mb-1">副標題 / 學段</label>
+                <input id="coverSubtitleInput" type="text" oninput="markCoverDirty()" class="w-full px-3 py-2 rounded-lg border border-borderWarm bg-paper text-xs text-ink" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-inkMuted mb-1">作者 / 指導教師</label>
+                <input id="coverAuthorInput" type="text" oninput="markCoverDirty()" class="w-full px-3 py-2 rounded-lg border border-borderWarm bg-paper text-xs text-ink" />
+              </div>
+            </div>
+          </div>
+          <div class="md:col-span-8">
+            <label class="block text-xs font-semibold text-inkMuted mb-1">封面 AI 繪圖構圖描述 (Image Prompt)</label>
+            <textarea id="coverPromptInput" rows="3" oninput="markCoverDirty()" class="w-full p-3 rounded-lg border border-borderWarm bg-paper text-sm text-ink resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分鏡卡片列表容器 -->
+      <div id="outlineCardsContainer" class="space-y-4"></div>
+    </section>
+
+    <!-- ==================== 階段 3：完整有聲繪本呈現與教材發行 ==================== -->
+    <section id="step3Section" class="hidden space-y-6">
+      <!-- 頂部極簡控制與下載發行列 -->
+      <div class="bg-white rounded-2xl border border-borderWarm p-4 sm:p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <!-- 左側：返回與閱讀模式切換 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="trySwitchStep(2)" class="px-3.5 py-2 rounded-xl border border-borderWarm hover:bg-paperDark text-ink text-xs sm:text-sm font-medium transition">
+            ✎ 編修大綱
+          </button>
+
+          <!-- 填空模式開啟時顯示的三態切換器 -->
+          <div id="readerModeGroup" class="flex items-center bg-paperDark p-1 rounded-xl border border-borderWarm">
+            <button onclick="setReaderMode('read')" id="modeBtnRead" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-terracotta shadow-sm transition">
+              📖 純享朗讀
+            </button>
+            <button onclick="setReaderMode('cloze-quiz')" id="modeBtnQuiz" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-inkMuted hover:text-ink transition">
+              ✍️ 填空挑戰
+            </button>
+            <button onclick="setReaderMode('cloze-teacher')" id="modeBtnTeacher" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-inkMuted hover:text-ink transition">
+              👩‍🏫 教師帶讀
+            </button>
+          </div>
+        </div>
+
+        <!-- 右側：三大教材匯出按鈕 (極簡化規範) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="exportStandaloneHTML()" class="px-4 py-2 rounded-xl bg-sage hover:bg-sage/90 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+            <span>📥 下載 HTML</span>
+          </button>
+          <button onclick="exportPresentationPPTX()" class="px-4 py-2 rounded-xl bg-terracotta hover:bg-terracottaDark text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+            <span>📊 下載 PPTX</span>
+          </button>
+          <button onclick="openPdfModal()" class="px-4 py-2 rounded-xl bg-ink hover:bg-ink/90 text-white text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+            <span>📄 下載 PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 穩定 16:9 全螢幕閱讀舞台 -->
+      <div id="fullscreenStage" class="space-y-4">
+        <!-- 播放與全螢幕極簡控制列 -->
+        <div class="fs-toolbar flex flex-wrap items-center justify-between gap-3 bg-white/90 px-5 py-2.5 rounded-2xl border border-borderWarm shadow-sm">
+          <div class="flex items-center gap-2">
+            <button onclick="prevPage()" id="btnPrevPage" class="px-3.5 py-1.5 rounded-lg bg-paperDark hover:bg-borderWarm text-ink text-sm font-semibold transition">
+              ◀ 上一頁
+            </button>
+            <span id="pageIndicator" class="px-3 py-1 text-sm font-serif font-bold text-ink">封面</span>
+            <button onclick="nextPage()" id="btnNextPage" class="px-3.5 py-1.5 rounded-lg bg-paperDark hover:bg-borderWarm text-ink text-sm font-semibold transition">
+              下一頁 ▶
+            </button>
+          </div>
+
+          <!-- 語音伴讀控制 -->
+          <div class="flex items-center gap-2">
+            <button onclick="togglePlayCurrentPageAudio()" id="btnPlayAudio" class="px-4 py-1.5 rounded-lg bg-terracotta hover:bg-terracottaDark text-white text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+              <span id="playAudioIcon">▶</span>
+              <span id="playAudioLabel">播放語音</span>
+            </button>
+            <button onclick="toggleAutoPlayBook()" id="btnAutoPlay" class="px-3.5 py-1.5 rounded-lg bg-paperDark hover:bg-borderWarm text-ink text-xs font-semibold transition">
+              🔁 連續播放：關
+            </button>
+            <button onclick="regenerateCurrentPageAssets()" id="btnRegenPage" class="px-3 py-1.5 rounded-lg border border-borderWarm hover:bg-paperDark text-inkMuted hover:text-ink text-xs font-medium transition">
+              ↻ 重繪本頁
+            </button>
+            <button onclick="toggleStableFullscreen()" id="btnFullscreen" class="px-3.5 py-1.5 rounded-lg bg-ink text-white hover:bg-ink/85 text-xs font-semibold transition flex items-center gap-1">
+              <span>⛶ 全螢幕</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 16:9 擬真雙欄繪本跨頁主容器 -->
+        <div class="reader-aspect-box w-full aspect-[16/10] sm:aspect-[16/9] book-spread rounded-2xl border border-borderWarm overflow-hidden flex flex-col md:flex-row relative">
+          <!-- 中縫立體陰影 (僅在雙欄顯示) -->
+          <div class="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 book-spine-shadow pointer-events-none z-10"></div>
+
+          <!-- 左欄：AI 生成繪圖展示區 -->
+          <div class="w-full md:w-1/2 h-1/2 md:h-full bg-paperDark/60 p-4 sm:p-8 flex items-center justify-center relative overflow-hidden">
+            <div class="w-full h-full rounded-xl overflow-hidden shadow-md border border-borderWarm bg-white flex items-center justify-center relative">
+              <img id="readerImage" src="" alt="繪本插圖" class="w-full h-full object-cover transition-opacity duration-300" />
+              <div id="readerImageBadge" class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/55 backdrop-blur-xs text-white text-xs font-medium">
+                封面插畫
+              </div>
+            </div>
+          </div>
+
+          <!-- 右欄：故事排版內文、填空互動與教學引導 -->
+          <div class="w-full md:w-1/2 h-1/2 md:h-full p-6 sm:p-10 flex flex-col justify-between bg-paper overflow-y-auto">
+            <!-- 封面右欄模式 -->
+            <div id="readerCoverRight" class="my-auto space-y-6 text-center md:text-left">
+              <div class="inline-block px-3 py-1 rounded-full bg-terracotta/15 text-terracottaDark text-xs font-bold tracking-wider" id="displayCoverSubtitle">
+                國小初階有聲繪本
+              </div>
+              <h1 id="displayCoverTitle" class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-ink leading-tight">
+                小水滴的奇幻旅程
+              </h1>
+              <div class="pt-4 border-t border-borderWarm flex items-center justify-center md:justify-start gap-4 text-sm text-inkMuted">
+                <span>指導教師：<strong id="displayCoverAuthor" class="text-ink">王老師</strong></span>
+              </div>
+              <div class="pt-4">
+                <button onclick="nextPage()" class="px-6 py-3 rounded-xl bg-terracotta hover:bg-terracottaDark text-white font-semibold text-sm shadow-sm transition inline-flex items-center gap-2">
+                  <span>翻開繪本開始閱讀 ▶</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 內頁右欄模式 -->
+            <div id="readerPageRight" class="hidden flex-1 flex flex-col justify-between space-y-4">
+              <!-- 頁頂：教學目標標籤 -->
+              <div class="flex items-center justify-between border-b border-borderWarm pb-3">
+                <span id="displayPageGoal" class="px-2.5 py-1 rounded-md bg-sageLight text-sage text-xs font-bold">
+                  情節階段
+                </span>
+                <span id="displayPageNum" class="font-serif text-sm font-bold text-inkMuted">
+                  Page 1
+                </span>
+              </div>
+
+              <!-- 故事主文區 (保留 \n 換行排版) -->
+              <div class="my-auto py-2">
+                <div id="displayStoryContainer" class="story-typography font-serif text-lg sm:text-xl lg:text-2xl text-ink"></div>
+
+                <!-- 學生互動填空詞彙銀行 (僅在 cloze-quiz 顯示) -->
+                <div id="clozeWordBankBox" class="hidden mt-5 p-3.5 rounded-xl bg-paperDark border border-borderWarm space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-inkMuted">💡 點選詞彙填入空格：</span>
+                    <div class="flex items-center gap-2">
+                      <button onclick="giveClozeHint()" class="px-2.5 py-1 rounded-md bg-white hover:bg-borderWarm text-xs font-medium text-ink transition">提示字首</button>
+                      <button onclick="checkClozeAnswers()" class="px-3 py-1 rounded-md bg-sage text-white text-xs font-semibold transition">核對答案</button>
+                    </div>
+                  </div>
+                  <div id="clozeWordPills" class="flex flex-wrap gap-2"></div>
+                </div>
+              </div>
+
+              <!-- 頁底：閱讀理解教學提問鷹架 -->
+              <div id="pedagogicalBox" class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-start gap-2.5">
+                <span class="text-base">💬</span>
+                <div class="text-xs sm:text-sm text-ink">
+                  <strong class="font-bold text-terracottaDark">課堂提問引導：</strong>
+                  <span id="displayPedagogicalPrompt"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== 批次 AI 生成進度遮罩 Modal ==================== -->
+  <div id="synthesisModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-paper rounded-2xl border border-borderWarm max-w-md w-full p-6 shadow-2xl space-y-5 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-terracotta/15 text-terracotta flex items-center justify-center mx-auto animate-pulse text-2xl">
+        🎨
+      </div>
+      <div class="space-y-1.5">
+        <h3 id="synthesisTitle" class="font-serif text-xl font-bold text-ink">正在生成有聲繪本資源...</h3>
+        <p id="synthesisSubtitle" class="text-xs text-inkMuted">正在調用 Gemini Canvas 繪圖模型與 TTS 語音合成</p>
+      </div>
+      <!-- 進度條 -->
+      <div class="w-full h-3 bg-paperDark rounded-full overflow-hidden border border-borderWarm">
+        <div id="synthesisProgressBar" class="h-full bg-terracotta transition-all duration-300" style="width: 10%"></div>
+      </div>
+      <p id="synthesisStepDetail" class="text-xs font-medium text-sage">準備中...</p>
+    </div>
+  </div>
+
+  <!-- ==================== PDF 教學設計匯出設定 Modal ==================== -->
+  <div id="pdfExportModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-paper rounded-2xl border border-borderWarm max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-borderWarm pb-3">
+        <h3 class="font-serif text-xl font-bold text-ink">📄 匯出印刷級教學設計 PDF</h3>
+        <button onclick="closePdfModal()" class="text-inkMuted hover:text-ink text-lg font-bold">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <label class="block text-sm font-semibold text-ink">選擇課堂教材板型：</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-terracotta bg-terracotta/5" id="pdfTypeCardBook">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-sm text-ink">📘 A4 橫向繪本讀本</span>
+              <input type="radio" name="pdfLayoutType" value="landscape-book" checked onchange="updatePdfTypeSelection()" class="accent-terracotta" />
+            </div>
+            <p class="text-xs text-inkMuted leading-relaxed">含封面、閱讀前導讀提問、各頁左圖右文跨頁與讀後故事軸線回顧。</p>
+          </label>
+
+          <label class="cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-borderWarm bg-white" id="pdfTypeCardWorksheet">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-sm text-ink">📝 A4 直向素養學習單</span>
+              <input type="radio" name="pdfLayoutType" value="portrait-worksheet" onchange="updatePdfTypeSelection()" class="accent-terracotta" />
+            </div>
+            <p class="text-xs text-inkMuted leading-relaxed">含班級姓名欄、參考詞彙庫(Word Bank)、圖文克漏字填充與閱讀理解深層提問。</p>
+          </label>
+        </div>
+
+        <!-- 學校影印機省墨黑白模式 -->
+        <div class="p-3.5 rounded-xl bg-paperDark border border-borderWarm flex items-center gap-3">
+          <input id="pdfGrayscaleToggle" type="checkbox" class="w-4 h-4 accent-terracotta rounded cursor-pointer" />
+          <label for="pdfGrayscaleToggle" class="text-xs sm:text-sm font-medium text-ink cursor-pointer">
+            🖨️ 啟用學校印刷省墨模式（高對比灰階優化，適合滾筒影印機）
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-borderWarm">
+        <button onclick="closePdfModal()" class="px-4 py-2 rounded-xl border border-borderWarm text-xs sm:text-sm font-medium text-ink">取消</button>
+        <button onclick="executePdfGeneration()" id="btnRunPdfExport" class="px-5 py-2 rounded-xl bg-terracotta hover:bg-terracottaDark text-white text-xs sm:text-sm font-semibold shadow-sm">
+          開始產生 PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 頂部輕量通知 Toast -->
+  <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl bg-ink text-white text-xs sm:text-sm font-medium shadow-xl flex items-center gap-2 transition-all">
+    <span id="toastText">通知訊息</span>
+  </div>
+
+  <!-- 隱藏的 PDF 離線排版舞台 -->
+  <div id="pdfRenderStage"></div>
+
+  <!-- ==================== 系統核心邏輯腳本 ==================== -->
+  <script>
+    // Gemini Canvas 原生環境自動注入空字串金鑰
+    const apiKey = "";
+
+    // 單一事實來源全局狀態 (Single Source of Truth)
+    const appState = {
+      currentStep: 1,
+      bookTitle: "小水滴的奇幻旅程",
+      author: "王老師",
+      audience: "junior",
+      language: "zh-TW",
+      artStylePrompt: "溫暖柔和的兒童繪本水彩插畫風，帶有細膩紙張紋理與柔和晨光",
+      enableClozePractice: true,
+      enableZhuyinMode: false,
+      readerDisplayMode: "read", // 'read' | 'cloze-quiz' | 'cloze-teacher'
+      currentPageIndex: 0,       // 0 代表封面, 1..N 代表各內頁
+      isPlayingAudio: false,
+      autoPlayBook: false,
+      isFullscreen: false,
+      selectedWordPill: null,
+      coverData: {
+        title: "小水滴的奇幻旅程",
+        subtitle: "自然科學與水循環繪本",
+        author: "王老師",
+        imagePrompt: "A cute smiling water droplet character floating over a sparkling blue ocean under a warm morning sun, children's picture book watercolor illustration",
+        imageDataUrl: "",
+        audioDataUrl: "",
+        isDirty: true
+      },
+      pages: []
+    };
+
+    // 當前播放中的音訊實例
+    let activeAudioElement = null;
+
+    // 預設教學範本庫
+    const PRESET_TEMPLATES = {
+      water: {
+        title: "小水滴的奇幻旅程",
+        author: "王老師",
+        audience: "junior",
+        language: "zh-TW",
+        style: "溫暖柔和的兒童繪本水彩插畫風，帶有細膩紙張紋理與柔和晨光",
+        cloze: true,
+        source: `小水滴住在蔚藍寬廣的大海裡，每天和魚兒一起隨著海浪輕輕搖擺。\n有一天，溫暖的太陽公公高高掛在天空，金黃色的陽光灑在海面上。\n小水滴覺得身體變得暖洋洋、輕飄飄的，化作看不見的水蒸氣，慢慢地往天空升起。\n越飛越高，空氣變得涼涼的，小水滴凝結成細小的水珠，和成千上萬的同伴手牽手聚在一起，變成了一朵潔白柔軟的白雲。\n微風吹來，帶著白雲飄過翠綠的高山與廣闊的平原，小水滴在空中俯瞰美麗的大地。\n漸漸地，雲朵裡的小水滴越聚越多，白雲變得又厚又重，穿上了灰暗色的烏雲外衣。\n轟隆隆！雷公公敲響了大鼓，冰冷的風吹過，小水滴再也抓不住同伴的手。\n嘩啦嘩啦！小水滴從高高的天空落下來，化為滋潤大地的甘甜雨水。\n雨水滴在乾渴的泥土上，洗淨了翠綠的樹葉，也讓路邊的小花開心地綻放笑臉。\n最後，小水滴順著山間清澈的小溪，一路唱著歌流回溫暖的大海，期待下一次的奇幻旅程。`
+      },
+      emotion: {
+        title: "小狐狸阿布的紅氣球",
+        author: "林老師",
+        audience: "early",
+        language: "zh-TW",
+        style: "童趣手繪粉彩與蠟筆質感插畫，色彩明亮溫馨，角色表情生動柔和",
+        cloze: true,
+        source: `小狐狸阿布有一顆最心愛的紅氣球。\n可是風太大了，紅氣球不小心飛上了高高的樹梢，阿布氣得臉頰紅通通，大聲跺腳。\n貓頭鷹伯伯溫柔地說：「先深深吸一口氣，像聞一朵香香的小花。」\n阿布慢慢深呼吸，心情平靜下來，請長頸鹿姐姐幫忙拿回了紅氣球，開心地道謝。`
+      },
+      bilingual: {
+        title: "The Little Forest Seed 森林小種子",
+        author: "Ms. Chen",
+        audience: "senior",
+        language: "bilingual",
+        style: "臺灣在地自然森林繪本水彩風，陽光穿透樹葉的溫暖光影",
+        cloze: true,
+        source: `A tiny seed slept deep under the warm soil.\n一顆小小的種子在溫暖的泥土深處沉睡著。\nWhen the spring rain fell, the seed drank the water and stretched its green roots.\n當春雨落下時，種子喝飽了水並伸展翠綠的根。\nSlowly, a brave little sprout pushed through the dark earth toward the bright sun.\n慢慢地，勇敢的小嫩芽穿過黑暗的泥土迎向明亮的陽光。\nWith patience and courage, it grew into a tall tree that sheltered forest friends.\n憑著耐心與勇氣，它長成了一棵守護森林朋友的大樹。`
+      }
+    };
+
+    // ==================== 工具函式 ====================
+    function showToast(msg) {
+      const box = document.getElementById("toastBox");
+      const txt = document.getElementById("toastText");
+      txt.textContent = msg;
+      box.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => box.classList.add("hidden"), 3200);
+    }
+
+    function setQuickStyle(styleText) {
+      document.getElementById("inputArtStyle").value = styleText;
+      showToast("已套用繪本風格描述");
+    }
+
+    function toggleZhuyinSetting(checked) {
+      appState.enableZhuyinMode = Boolean(checked);
+      showToast(appState.enableZhuyinMode ? "已開啟注音模式（將套用芫荽注音體 Bpmf Iansui）" : "已關閉注音模式");
+    }
+
+    function loadPreset(key) {
+      const p = PRESET_TEMPLATES[key];
+      if (!p) return;
+      document.getElementById("inputBookTitle").value = p.title;
+      document.getElementById("inputAuthor").value = p.author;
+      document.getElementById("inputAudience").value = p.audience;
+      document.getElementById("inputLanguage").value = p.language;
+      document.getElementById("inputArtStyle").value = p.style;
+      document.getElementById("inputClozeToggle").checked = p.cloze;
+      document.getElementById("inputStorySource").value = p.source;
+      showToast(`已載入「${p.title}」教學範例`);
+    }
+
+    // 指數退避 API 呼叫封裝
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+      let delay = 1000;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) return await res.json();
+          if (res.status !== 429 && res.status < 500) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+        } catch (err) {
+          if (i === maxRetries - 1) throw err;
+        }
+        await new Promise(r => setTimeout(r, delay));
+        delay *= 2;
+      }
+    }
+
+    // ==================== 階段切換控制器 ====================
+    function trySwitchStep(step) {
+      if (step === 2 && appState.pages.length === 0) {
+        showToast("請先在階段一生成分鏡大綱");
+        return;
+      }
+      if (step === 3 && appState.pages.length === 0) {
+        showToast("請先完成大綱確認與繪本生成");
+        return;
+      }
+      stopCurrentAudio();
+      appState.currentStep = step;
+
+      document.getElementById("step1Section").classList.toggle("hidden", step !== 1);
+      document.getElementById("step2Section").classList.toggle("hidden", step !== 2);
+      document.getElementById("step3Section").classList.toggle("hidden", step !== 3);
+
+      const btns = [
+        document.getElementById("stepBtn1"),
+        document.getElementById("stepBtn2"),
+        document.getElementById("stepBtn3")
+      ];
+      btns.forEach((b, idx) => {
+        if (idx + 1 === step) {
+          b.className = "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 bg-white text-terracotta shadow-sm";
+        } else {
+          b.className = "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 text-inkMuted hover:text-ink";
+        }
+      });
+
+      if (step === 2) renderStep2Outline();
+      if (step === 3) renderStep3Reader();
+    }
+
+    // ==================== 階段 1 ➔ 2：Gemini Canvas AI 分鏡大綱生成 ====================
+    async function handleGenerateOutline() {
+      const title = document.getElementById("inputBookTitle").value.trim() || "未命名繪本";
+      const author = document.getElementById("inputAuthor").value.trim() || "指導教師";
+      const audience = document.getElementById("inputAudience").value;
+      const language = document.getElementById("inputLanguage").value;
+      const pageCount = parseInt(document.getElementById("inputPageCount").value, 10) || 10;
+      const artStyle = document.getElementById("inputArtStyle").value.trim() || "溫暖兒童繪本水彩插畫風";
+      const enableCloze = document.getElementById("inputClozeToggle").checked;
+      const enableZhuyin = document.getElementById("inputZhuyinToggle").checked;
+      const sourceText = document.getElementById("inputStorySource").value.trim();
+
+      if (!sourceText) {
+        showToast("請輸入故事主題或課文內容");
+        return;
+      }
+
+      appState.bookTitle = title;
+      appState.author = author;
+      appState.audience = audience;
+      appState.language = language;
+      appState.artStylePrompt = artStyle;
+      appState.enableClozePractice = enableCloze;
+      appState.enableZhuyinMode = enableZhuyin;
+      appState.readerDisplayMode = "read";
+
+      const btn = document.getElementById("btnGenerateOutline");
+      const origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin">⏳</span><span>Gemini 分鏡生成中...</span>`;
+
+      try {
+        const outlineData = await generateOutlineWithGemini( {
+          title, author, audience, language, pageCount, artStyle, enableCloze, sourceText
+        });
+
+        appState.coverData = {
+          title: outlineData.cover?.title || title,
+          subtitle: outlineData.cover?.subtitle || getAudienceLabel(audience),
+          author: author,
+          imagePrompt: outlineData.cover?.imagePrompt || `${artStyle}, charming book cover illustration for ${title}, no text`,
+          imageDataUrl: "",
+          audioDataUrl: "",
+          isDirty: true
+        };
+
+        appState.pages = (outlineData.pages || []).map((p, idx) => ({
+          pageNumber: idx + 1,
+          pageGoal: p.pageGoal || `第 ${idx + 1} 幕`,
+          storyText: p.storyText || "",
+          imagePrompt: p.imagePrompt || `${artStyle}, scene ${idx + 1}`,
+          clozeKeywords: enableCloze ? (p.clozeKeywords || []).slice(0, 3) : [],
+          pedagogicalPrompt: p.pedagogicalPrompt || "想一想，這個畫面裡發生了什麼重要變化？",
+          imageDataUrl: "",
+          audioDataUrl: "",
+          isDirty: true
+        }));
+
+        trySwitchStep(2);
+        showToast("分鏡大綱已生成！您可自由換行排版或增減分鏡");
+      } catch (err) {
+        console.warn("Gemini 大綱生成降級至本地智慧切分:", err);
+        buildFallbackOutline({ title, author, audience, language, pageCount, artStyle, enableCloze, sourceText });
+        trySwitchStep(2);
+        showToast("已完成分鏡大綱切分！");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+
+    function getAudienceLabel(aud) {
+      if (aud === "early") return "幼兒啟蒙繪本 (3-6歲)";
+      if (aud === "senior") return "國小高年級讀本 (10-12歲)";
+      return "國小初階素養繪本";
+    }
+
+    async function generateOutlineWithGemini(params) {
+      const langDesc = params.language === "en-US" ? "English" : (params.language === "bilingual" ? "Traditional Chinese and English bilingual (separated by newline \\n)" : "Traditional Chinese (臺灣繁體中文)");
+      const systemPrompt = `You are an expert educational picture book curriculum designer for K-12 teachers.
+Create a structured picture book storyboard with exactly ${params.pageCount} pages based on the user's input.
+- Target Audience: ${params.audience}
+- Story Language: ${langDesc}
+- Art Style: ${params.artStyle}
+- Use '\\n' line breaks inside storyText so teachers can present readable poetic or paragraph breaks on screen.
+- If enableCloze is true, extract 2 key educational vocabulary words per page that strictly appear inside that page's storyText, and provide 1 guiding pedagogical question (pedagogicalPrompt) for classroom discussion.`;
+
+      const userQuery = `Book Title: ${params.title}
+Enable Cloze Practice: ${params.enableCloze}
+Source Material / Topic:
+${params.sourceText}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              cover: {
+                type: "OBJECT",
+                properties: {
+                  title: { type: "STRING" },
+                  subtitle: { type: "STRING" },
+                  imagePrompt: { type: "STRING" }
+                },
+                required: ["title", "subtitle", "imagePrompt"]
+              },
+              pages: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    pageGoal: { type: "STRING" },
+                    storyText: { type: "STRING" },
+                    imagePrompt: { type: "STRING" },
+                    clozeKeywords: { type: "ARRAY", items: { type: "STRING" } },
+                    pedagogicalPrompt: { type: "STRING" }
+                  },
+                  required: ["pageGoal", "storyText", "imagePrompt", "clozeKeywords", "pedagogicalPrompt"]
+                }
+              }
+            },
+            required: ["cover", "pages"]
+          }
+        }
+      };
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const result = await fetchWithRetry(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) throw new Error("Empty outline response");
+      return JSON.parse(rawJson);
+    }
+
+    // 啟發式離線備援大綱切分
+    function buildFallbackOutline(params) {
+      const lines = params.sourceText.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const goals = ["故事開端與情境", "探索與發現", "奇妙的變化", "旅程的推進", "轉折與挑戰", "高潮時刻", "滋潤與幫助", "收穫與成長", "延伸思考", "溫馨結尾"];
+      const pages = [];
+      const count = Math.min(12, Math.max(3, params.pageCount || lines.length || 10));
+
+      for (let i = 0; i < count; i++) {
+        const text = lines[i] || `這是《${params.title}》的第 ${i + 1} 段精彩故事。\n讓我們一起仔細觀察畫面中的細節。`;
+        const keywords = params.enableCloze ? extractFallbackKeywords(text) : [];
+        pages.push({
+          pageNumber: i + 1,
+          pageGoal: goals[i % goals.length],
+          storyText: text,
+          imagePrompt: `${params.artStyle}, children's picture book illustration depicting: ${text.replace(/\n/g, " ")}, warm lighting, no text`,
+          clozeKeywords: keywords,
+          pedagogicalPrompt: `讀完這一頁，你覺得主角接下來會遇到什麼事呢？`,
+          imageDataUrl: "",
+          audioDataUrl: "",
+          isDirty: true
+        });
+      }
+
+      appState.coverData = {
+        title: params.title,
+        subtitle: getAudienceLabel(params.audience),
+        author: params.author,
+        imagePrompt: `${params.artStyle}, enchanting picture book cover illustration for "${params.title}", warm inviting composition, no text`,
+        imageDataUrl: "",
+        audioDataUrl: "",
+        isDirty: true
+      };
+      appState.pages = pages;
+    }
+
+    function extractFallbackKeywords(text) {
+      const enWords = text.match(/\b[A-Za-z]{4,10}\b/g);
+      if (enWords && enWords.length >= 2) return [enWords[0], enWords[1]];
+      const clean = text.replace(/[，。！？、：\n\s「」]/g, "");
+      if (clean.length >= 6) {
+        return [clean.slice(0, 2), clean.slice(3, 5)];
+      }
+      return [];
+    }
+
+    // ==================== 階段 2：分鏡大綱編修與 AI 協同增減 ====================
+    function renderStep2Outline() {
+      const badge = document.getElementById("step2ClozeBadge");
+      if (appState.enableClozePractice) {
+        badge.textContent = "已啟用填空練習模式";
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sageLight text-sage";
+      } else {
+        badge.textContent = "純享讀本模式";
+        badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-paperDark text-inkMuted";
+      }
+
+      document.getElementById("coverStylePreview").textContent = appState.artStylePrompt;
+      document.getElementById("coverTitleInput").value = appState.coverData.title;
+      document.getElementById("coverSubtitleInput").value = appState.coverData.subtitle || "";
+      document.getElementById("coverAuthorInput").value = appState.coverData.author || "";
+      document.getElementById("coverPromptInput").value = appState.coverData.imagePrompt || "";
+
+      const container = document.getElementById("outlineCardsContainer");
+      container.innerHTML = "";
+
+      appState.pages.forEach((p, idx) => {
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-2xl border border-borderWarm p-5 shadow-sm transition hover:border-terracotta/50";
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-borderWarm">
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-terracotta text-white font-serif font-bold text-sm flex items-center justify-center">
+                ${idx + 1}
+              </span>
+              <input type="text" value="${escapeHtml(p.pageGoal)}"
+                onchange="updatePageField(${idx}, 'pageGoal', this.value)"
+                class="px-2.5 py-1 rounded-lg border border-borderWarm bg-paper text-xs font-bold text-ink focus:bg-white outline-none"
+                placeholder="本頁教學目標" />
+              ${p.isDirty ? `<span class="text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">待生成/更新</span>` : `<span class="text-[11px] px-2 py-0.5 rounded bg-sageLight text-sage font-medium">✓ 已快取</span>`}
+            </div>
+
+            <!-- 極簡分鏡操作按鈕 -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="aiPolishPageText(${idx})" class="px-2.5 py-1 rounded-lg bg-paperDark hover:bg-borderWarm text-xs font-medium text-ink transition">
+                ✨ AI 潤飾
+              </button>
+              <button onclick="insertAfterPage(${idx})" class="px-2.5 py-1 rounded-lg bg-paperDark hover:bg-borderWarm text-xs font-medium text-ink transition">
+                + 向後插入分鏡
+              </button>
+              <button onclick="deletePage(${idx})" class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-xs font-medium text-red-700 transition">
+                ✕ 刪除本頁
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- 故事內文 (支援換行排版) -->
+            <div class="lg:col-span-6">
+              <label class="block text-xs font-semibold text-inkMuted mb-1">故事內文（直接按 Enter 即可換行分段排版）</label>
+              <textarea rows="4" oninput="updatePageField(${idx}, 'storyText', this.value)"
+                class="w-full p-3 rounded-xl border border-borderWarm bg-paper focus:bg-white text-sm text-ink leading-relaxed resize-none outline-none">${escapeHtml(p.storyText)}</textarea>
+            </div>
+
+            <!-- 插圖構圖描述與教學設計設定 -->
+            <div class="lg:col-span-6 space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-inkMuted mb-1">左側 AI 繪圖描述 (自動融合教師自訂風格)</label>
+                <textarea rows="2" oninput="updatePageField(${idx}, 'imagePrompt', this.value)"
+                  class="w-full p-2.5 rounded-xl border border-borderWarm bg-paper focus:bg-white text-xs text-ink resize-none outline-none">${escapeHtml(p.imagePrompt)}</textarea>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div class="${appState.enableClozePractice ? '' : 'opacity-40 pointer-events-none'}">
+                  <label class="block text-xs font-semibold text-inkMuted mb-1">填空核心詞彙 (逗號分隔)</label>
+                  <input type="text" value="${escapeHtml((p.clozeKeywords || []).join(', '))}"
+                    onchange="updatePageKeywords(${idx}, this.value)"
+                    placeholder="例：太陽, 白雲"
+                    class="w-full px-3 py-1.5 rounded-lg border border-borderWarm bg-paper text-xs text-ink outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-inkMuted mb-1">課堂引導提問 (教學設計)</label>
+                  <input type="text" value="${escapeHtml(p.pedagogicalPrompt || '')}"
+                    onchange="updatePageField(${idx}, 'pedagogicalPrompt', this.value)"
+                    placeholder="引導學生觀察或思考的問題"
+                    class="w-full px-3 py-1.5 rounded-lg border border-borderWarm bg-paper text-xs text-ink outline-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function markCoverDirty() {
+      appState.coverData.title = document.getElementById("coverTitleInput").value;
+      appState.coverData.subtitle = document.getElementById("coverSubtitleInput").value;
+      appState.coverData.author = document.getElementById("coverAuthorInput").value;
+      appState.coverData.imagePrompt = document.getElementById("coverPromptInput").value;
+      appState.coverData.isDirty = true;
+      appState.bookTitle = appState.coverData.title;
+    }
+
+    function updatePageField(idx, field, val) {
+      if (!appState.pages[idx]) return;
+      appState.pages[idx][field] = val;
+      appState.pages[idx].isDirty = true;
+    }
+
+    function updatePageKeywords(idx, rawStr) {
+      if (!appState.pages[idx]) return;
+      appState.pages[idx].clozeKeywords = rawStr
+        .split(/[,，、]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // 動態插入分鏡卡 (維持 3~12 頁邊界保護)
+    function insertAfterPage(idx) {
+      if (appState.pages.length >= 12) {
+        showToast("為確保離線有聲書效能，建議單本繪本最多 12 頁");
+        return;
+      }
+      const prev = appState.pages[idx];
+      const newPage = {
+        pageNumber: idx + 2,
+        pageGoal: "新插入情節",
+        storyText: "在這裡輸入新的故事段落，\n可以按 Enter 自由換行排版。",
+        imagePrompt: `${appState.artStylePrompt}, continuation scene after: ${prev.pageGoal}`,
+        clozeKeywords: [],
+        pedagogicalPrompt: "觀察看看，這一頁的主角有什麼新發現？",
+        imageDataUrl: "",
+        audioDataUrl: "",
+        isDirty: true
+      };
+      appState.pages.splice(idx + 1, 0, newPage);
+      reindexPages();
+      renderStep2Outline();
+      showToast(`已於第 ${idx + 1} 頁後插入新分鏡卡`);
+    }
+
+    // 刪除分鏡卡並重新對齊頁碼 1..N
+    function deletePage(idx) {
+      if (appState.pages.length <= 3) {
+        showToast("繪本至少需保留 3 頁以維持完整敘事結構");
+        return;
+      }
+      appState.pages.splice(idx, 1);
+      reindexPages();
+      renderStep2Outline();
+      showToast("已刪除分鏡並重新排列頁碼");
+    }
+
+    function reindexPages() {
+      appState.pages.forEach((p, i) => {
+        p.pageNumber = i + 1;
+      });
+    }
+
+    // Gemini AI 協同延展新分鏡
+    async function aiExtendNewPage() {
+      if (appState.pages.length >= 12) {
+        showToast("單本繪本已達 12 頁上限");
+        return;
+      }
+      const btn = document.getElementById("btnAiExtend");
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin">⏳</span><span>AI 續寫中...</span>`;
+
+      try {
+        const lastPage = appState.pages[appState.pages.length - 1];
+        const prompt = `根據繪本《${appState.coverData.title}》上一頁情節：「${lastPage.storyText}」，請續寫下一頁分鏡。
+視覺風格：${appState.artStylePrompt}。請使用 \\n 換行排版。`;
+
+        const payload = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                pageGoal: { type: "STRING" },
+                storyText: { type: "STRING" },
+                imagePrompt: { type: "STRING" },
+                clozeKeywords: { type: "ARRAY", items: { type: "STRING" } },
+                pedagogicalPrompt: { type: "STRING" }
+              },
+              required: ["pageGoal", "storyText", "imagePrompt", "clozeKeywords", "pedagogicalPrompt"]
+            }
+          }
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const res = await fetchWithRetry(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = JSON.parse(res.candidates[0].content.parts[0].text);
+
+        appState.pages.push({
+          pageNumber: appState.pages.length + 1,
+          pageGoal: data.pageGoal || "延伸情節",
+          storyText: data.storyText,
+          imagePrompt: data.imagePrompt,
+          clozeKeywords: appState.enableClozePractice ? (data.clozeKeywords || []).slice(0, 2) : [],
+          pedagogicalPrompt: data.pedagogicalPrompt || "故事最後帶給我們什麼啟發？",
+          imageDataUrl: "",
+          audioDataUrl: "",
+          isDirty: true
+        });
+        renderStep2Outline();
+        showToast("✨ AI 已為您延展新分鏡！");
+      } catch (e) {
+        insertAfterPage(appState.pages.length - 1);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    // AI 單頁文本潤飾與換行優化
+    async function aiPolishPageText(idx) {
+      const p = appState.pages[idx];
+      if (!p) return;
+      showToast(`正在使用 Gemini 潤飾第 ${idx + 1} 頁內文...`);
+      try {
+        const prompt = `請將以下兒童繪本第 ${idx + 1} 頁的故事內文潤飾得更具文學美感與朗讀節奏，並加入適當的 \\n 換行排版（維持原意與語言）：\n${p.storyText}`;
+        const payload = {
+          contents: [{ parts: [{ text: prompt }] }]
+        };
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const res = await fetchWithRetry(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const polished = res?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (polished) {
+          p.storyText = polished.trim();
+          p.isDirty = true;
+          renderStep2Outline();
+          showToast(`✨ 第 ${idx + 1} 頁內文已潤飾完成！`);
+        }
+      } catch (e) {
+        showToast("潤飾失敗，請稍後再試");
+      }
+    }
+
+    // ==================== 階段 2 ➔ 3：確認大綱後一併完成 AI 繪圖與 Gemini TTS 語音 ====================
+    async function handleConfirmAndSynthesizeAll() {
+      const modal = document.getElementById("synthesisModal");
+      const bar = document.getElementById("synthesisProgressBar");
+      const detail = document.getElementById("synthesisStepDetail");
+
+      modal.classList.remove("hidden");
+      bar.style.width = "5%";
+      detail.textContent = "準備啟動 AI 繪圖與語音合成佇列...";
+
+      const totalTasks = 1 + appState.pages.length; // 封面(圖+音並行) + 每頁(圖+音並行)
+      let completed = 0;
+
+      const updateProgress = (msg) => {
+        completed++;
+        const pct = Math.min(100, Math.round((completed / totalTasks) * 100));
+        bar.style.width = `${pct}%`;
+        detail.textContent = `${msg} (${pct}%)`;
+      };
+
+      try {
+        // 1. 同步並行生成：封面 AI 圖片 + 封面標題語音
+        if (appState.coverData.isDirty || !appState.coverData.imageDataUrl || !appState.coverData.audioDataUrl) {
+          detail.textContent = "正在同步生成「專屬封面 AI 插圖」與「封面語音」...";
+          const fullCoverPrompt = `Children's picture book illustration. Art style: ${appState.artStylePrompt}. Scene description: ${appState.coverData.imagePrompt}. Warm inviting composition, no text, no letters, no watermark.`;
+          const [coverImg, coverAudio] = await Promise.all([
+            (!appState.coverData.imageDataUrl || appState.coverData.isDirty)
+              ? generateCanvasAIImage(fullCoverPrompt, appState.coverData.title, 0)
+              : Promise.resolve(appState.coverData.imageDataUrl),
+            (!appState.coverData.audioDataUrl || appState.coverData.isDirty)
+              ? generateGeminiTTS(`${appState.coverData.title}。指導老師：${appState.coverData.author}`)
+              : Promise.resolve(appState.coverData.audioDataUrl)
+          ]);
+          appState.coverData.imageDataUrl = coverImg;
+          appState.coverData.audioDataUrl = coverAudio;
+          appState.coverData.isDirty = false;
+        }
+        updateProgress("專屬封面插圖與語音已完成");
+
+        // 2. 逐頁同步並行完成：左側 AI 繪圖 + Gemini TTS 語音一併進行
+        for (let i = 0; i < appState.pages.length; i++) {
+          const page = appState.pages[i];
+          const needImg = page.isDirty || !page.imageDataUrl;
+          const needAudio = page.isDirty || !page.audioDataUrl;
+
+          if (needImg || needAudio) {
+            detail.textContent = `正在同步生成第 ${i + 1} / ${appState.pages.length} 頁「AI 繪圖」與「TTS 語音」...`;
+            const fullImgPrompt = `Children's storybook illustration. Art style: ${appState.artStylePrompt}. Scene description: ${page.imagePrompt}. Story context: ${page.storyText.replace(/\n+/g, " ")}. Pure illustration, no text, no words.`;
+
+            const [pageImg, pageAudio] = await Promise.all([
+              needImg ? generateCanvasAIImage(fullImgPrompt, page.pageGoal, i + 1) : Promise.resolve(page.imageDataUrl),
+              needAudio ? generateGeminiTTS(page.storyText) : Promise.resolve(page.audioDataUrl)
+            ]);
+
+            page.imageDataUrl = pageImg;
+            page.audioDataUrl = pageAudio;
+            page.isDirty = false;
+          }
+          updateProgress(`第 ${i + 1} / ${appState.pages.length} 頁 AI 繪圖與語音同步完成`);
+        }
+
+        appState.currentPageIndex = 0; // 從封面開始呈現
+        modal.classList.add("hidden");
+        trySwitchStep(3);
+        showToast("🎉 全書 AI 插圖與 Gemini TTS 語音已同步生成完成！");
+      } catch (err) {
+        console.error("批次合成異常:", err);
+        modal.classList.add("hidden");
+        trySwitchStep(3);
+      }
+    }
+
+    // 調用 Gemini Canvas 原生繪圖模型 (優先使用 gemini-3.1-flash-image，備援 gemini-3.1-flash-lite-image) 並轉為 Base64
+    async function generateCanvasAIImage(promptText, labelTitle, seedIndex) {
+      // 優先調用 gemini-3.1-flash-image (支援高品質繪本生圖與比例設定)
+      const modelsToTry = [
+        {
+          model: "gemini-3.1-flash-image",
+          config: {
+            responseModalities: ["IMAGE"],
+            imageConfig: { aspectRatio: "4:3" }
+          }
+        },
+        {
+          model: "gemini-3.1-flash-lite-image",
+          config: {
+            responseModalities: ["TEXT", "IMAGE"]
+          }
+        }
+      ];
+
+      for (const item of modelsToTry) {
+        try {
+          const payload = {
+            contents: [{
+              role: "user",
+              parts: [{ text: promptText }]
+            }],
+            generationConfig: item.config
+          };
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${item.model}:generateContent?key=${apiKey}`;
+          const result = await fetchWithRetry(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }, 3);
+
+          const parts = result?.candidates?.[0]?.content?.parts || [];
+          const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
+          if (imgPart) {
+            const mime = imgPart.inlineData.mimeType || "image/png";
+            return `data:${mime};base64,${imgPart.inlineData.data}`;
+          }
+        } catch (err) {
+          console.warn(`繪圖模型 ${item.model} 嘗試切換:`, err);
+        }
+      }
+
+      console.warn("所有 AI 繪圖模型皆忙碌，啟用本地高解析水彩備援畫布");
+      return renderArtisticWatercolorFallback(labelTitle, promptText, seedIndex);
+    }
+
+    // 當繪圖 API 限流時的高質感水彩備援畫布（確保 100% 離線可打包 Base64）
+    function renderArtisticWatercolorFallback(title, prompt, idx) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 960;
+      canvas.height = 720;
+      const ctx = canvas.getContext("2d");
+
+      const palettes = [
+        ["#E3F2FD", "#FFF9C4", "#81C784", "#4DB6AC"],
+        ["#FFF3E0", "#FCE4EC", "#FFB74D", "#A1887F"],
+        ["#E8F5E9", "#E0F7FA", "#66BB6A", "#26A69A"],
+        ["#EDE7F6", "#E1F5FE", "#7986CB", "#4FC3F7"]
+      ];
+      const pal = palettes[idx % palettes.length];
+
+      const grad = ctx.createLinearGradient(0, 0, 0, 720);
+      grad.addColorStop(0, pal[0]);
+      grad.addColorStop(1, pal[1]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 960, 720);
+
+      // 柔和晨光日暈
+      const sunGrad = ctx.createRadialGradient(750, 160, 15, 750, 160, 180);
+      sunGrad.addColorStop(0, "rgba(255, 245, 157, 0.9)");
+      sunGrad.addColorStop(1, "rgba(255, 245, 157, 0)");
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(750, 160, 180, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 遠山與近丘水彩波浪
+      ctx.fillStyle = pal[3] + "66";
+      ctx.beginPath();
+      ctx.moveTo(0, 500);
+      for (let x = 0; x <= 960; x += 40) {
+        ctx.lineTo(x, 470 + Math.sin(x * 0.008 + idx) * 45);
+      }
+      ctx.lineTo(960, 720);
+      ctx.lineTo(0, 720);
+      ctx.fill();
+
+      ctx.fillStyle = pal[2] + "99";
+      ctx.beginPath();
+      ctx.moveTo(0, 560);
+      for (let x = 0; x <= 960; x += 30) {
+        ctx.lineTo(x, 550 + Math.cos(x * 0.01 + idx) * 35);
+      }
+      ctx.lineTo(960, 720);
+      ctx.lineTo(0, 720);
+      ctx.fill();
+
+      // 繪本紙張內框
+      ctx.strokeStyle = "rgba(255,255,255,0.75)";
+      ctx.lineWidth = 12;
+      ctx.strokeRect(28, 28, 904, 664);
+
+      return canvas.toDataURL("image/png");
+    }
+
+    // 調用 Gemini TTS (gemini-2.5-flash-preview-tts) 並將 PCM16 轉封裝為 Base64 WAV DataURL
+    async function generateGeminiTTS(textToSpeak) {
+      const cleanText = String(textToSpeak || "").replace(/\n+/g, "，").trim();
+      if (!cleanText) return "";
+
+      try {
+        const payload = {
+          contents: [{
+            parts: [{ text: `請用溫柔親切的繪本說故事老師語氣朗讀：${cleanText}` }]
+          }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: "Kore" }
+              }
+            }
+          },
+          model: "gemini-2.5-flash-preview-tts"
+        };
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        const result = await fetchWithRetry(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }, 2);
+
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        const b64Audio = part?.inlineData?.data;
+        const mime = part?.inlineData?.mimeType || "audio/L16;rate=24000";
+
+        if (b64Audio) {
+          const rateMatch = mime.match(/rate=(\d+)/);
+          const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+          return pcmBase64ToWavDataUrl(b64Audio, sampleRate);
+        }
+        return "";
+      } catch (err) {
+        console.warn("Gemini TTS 語音快取略過，將於播放時自動支援:", err);
+        return "";
+      }
+    }
+
+    // 將 Gemini TTS 回傳的 signed PCM16 Base64 封裝成標準 WAV Base64 DataURL (可離線打包進 HTML)
+    function pcmBase64ToWavDataUrl(base64Pcm, sampleRate = 24000) {
+      const binaryStr = atob(base64Pcm);
+      const pcmLength = binaryStr.length;
+      const wavBuffer = new ArrayBuffer(44 + pcmLength);
+      const view = new DataView(wavBuffer);
+
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) {
+          view.setUint8(offset + i, str.charCodeAt(i));
+        }
+      };
+
+      writeStr(0, "RIFF");
+      view.setUint32(4, 36 + pcmLength, true);
+      writeStr(8, "WAVE");
+      writeStr(12, "fmt ");
+      view.setUint32(16, 16, true);          // Subchunk1Size (16 for PCM)
+      view.setUint16(20, 1, true);           // AudioFormat (1 = PCM)
+      view.setUint16(22, 1, true);           // NumChannels (1 = Mono)
+      view.setUint32(24, sampleRate, true);  // SampleRate
+      view.setUint32(28, sampleRate * 2, true); // ByteRate
+      view.setUint16(32, 2, true);           // BlockAlign
+      view.setUint16(34, 16, true);          // BitsPerSample
+      writeStr(36, "data");
+      view.setUint32(40, pcmLength, true);
+
+      const uint8 = new Uint8Array(wavBuffer);
+      for (let i = 0; i < pcmLength; i++) {
+        uint8[44 + i] = binaryStr.charCodeAt(i);
+      }
+
+      let wavBinary = "";
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8.length; i += chunkSize) {
+        wavBinary += String.fromCharCode.apply(null, uint8.subarray(i, i + chunkSize));
+      }
+      return "data:audio/wav;base64," + btoa(wavBinary);
+    }
+
+    // ==================== 階段 3：完整有聲繪本閱讀器、填空互動與全螢幕 ====================
+    function renderStep3Reader() {
+      // 根據是否在 Step 1 開啟填空模式，控制三態切換器顯示
+      const modeGroup = document.getElementById("readerModeGroup");
+      if (appState.enableClozePractice) {
+        modeGroup.classList.remove("hidden");
+      } else {
+        modeGroup.classList.add("hidden");
+        appState.readerDisplayMode = "read";
+      }
+
+      const idx = appState.currentPageIndex;
+      const total = appState.pages.length;
+
+      document.getElementById("btnPrevPage").disabled = idx <= 0;
+      document.getElementById("btnPrevPage").classList.toggle("opacity-40", idx <= 0);
+      document.getElementById("btnNextPage").disabled = idx >= total;
+      document.getElementById("btnNextPage").classList.toggle("opacity-40", idx >= total);
+
+      const coverRight = document.getElementById("readerCoverRight");
+      const pageRight = document.getElementById("readerPageRight");
+      const imgEl = document.getElementById("readerImage");
+      const imgBadge = document.getElementById("readerImageBadge");
+
+      // 套用或移除芫荽注音體 (Bpmf Iansui)
+      coverRight.classList.toggle("zhuyin-font", Boolean(appState.enableZhuyinMode));
+      pageRight.classList.toggle("zhuyin-font", Boolean(appState.enableZhuyinMode));
+
+      if (idx === 0) {
+        // 封面頁呈現
+        document.getElementById("pageIndicator").textContent = `封面 (0 / ${total})`;
+        imgEl.src = appState.coverData.imageDataUrl || renderArtisticWatercolorFallback(appState.coverData.title, "", 0);
+        imgBadge.textContent = "繪本封面";
+
+        coverRight.classList.remove("hidden");
+        pageRight.classList.add("hidden");
+
+        document.getElementById("displayCoverTitle").textContent = appState.coverData.title;
+        document.getElementById("displayCoverSubtitle").textContent = appState.coverData.subtitle || getAudienceLabel(appState.audience);
+        document.getElementById("displayCoverAuthor").textContent = appState.coverData.author;
+      } else {
+        // 內頁呈現
+        const page = appState.pages[idx - 1];
+        document.getElementById("pageIndicator").textContent = `第 ${idx} / ${total} 頁`;
+        imgEl.src = page.imageDataUrl || renderArtisticWatercolorFallback(page.pageGoal, "", idx);
+        imgBadge.textContent = `第 ${idx} 頁・${page.pageGoal}`;
+
+        coverRight.classList.add("hidden");
+        pageRight.classList.remove("hidden");
+
+        document.getElementById("displayPageGoal").textContent = page.pageGoal;
+        document.getElementById("displayPageNum").textContent = `Page ${idx} / ${total}`;
+        document.getElementById("displayPedagogicalPrompt").textContent = page.pedagogicalPrompt || "觀察畫面，說說看你的想法！";
+
+        renderStoryContentByMode(page);
+      }
+    }
+
+    // 依三態渲染右欄內文（保留 \n 換行）
+    function renderStoryContentByMode(page) {
+      const container = document.getElementById("displayStoryContainer");
+      const bankBox = document.getElementById("clozeWordBankBox");
+      const pillsBox = document.getElementById("clozeWordPills");
+
+      const mode = appState.enableClozePractice ? appState.readerDisplayMode : "read";
+      const keywords = (page.clozeKeywords || []).filter(Boolean);
+
+      if (mode === "read" || keywords.length === 0) {
+        container.textContent = page.storyText;
+        bankBox.classList.add("hidden");
+        return;
+      }
+
+      if (mode === "cloze-teacher") {
+        let html = escapeHtml(page.storyText);
+        keywords.forEach(kw => {
+          const safeKw = escapeHtml(kw);
+          const reg = new RegExp(escapeRegExp(safeKw), "g");
+          html = html.replace(reg, `<span class="px-2 py-0.5 mx-1 rounded bg-sageLight text-sage font-bold underline decoration-2 underline-offset-4">${safeKw}</span>`);
+        });
+        container.innerHTML = html;
+        bankBox.classList.add("hidden");
+        return;
+      }
+
+      // 學生互動填空挑戰模式 (cloze-quiz)
+      let html = escapeHtml(page.storyText);
+      keywords.forEach((kw, kIdx) => {
+        const safeKw = escapeHtml(kw);
+        const reg = new RegExp(escapeRegExp(safeKw));
+        const widthEm = Math.max(4, safeKw.length + 1.5);
+        html = html.replace(
+          reg,
+          `<input type="text" data-answer="${safeKw}" data-idx="${kIdx}" onclick="handleBlankClick(this)" style="width:${widthEm}em" class="cloze-input" placeholder="？" />`
+        );
+      });
+      container.innerHTML = html;
+
+      // 建立詞彙銀行（包含本頁正解與其他頁干擾詞）
+      const distractors = [];
+      appState.pages.forEach(p => {
+        (p.clozeKeywords || []).forEach(w => {
+          if (!keywords.includes(w) && !distractors.includes(w)) distractors.push(w);
+        });
+      });
+      const wordPool = [...keywords, ...distractors.slice(0, 2)].sort(() => Math.random() - 0.5);
+
+      pillsBox.innerHTML = "";
+      wordPool.forEach(word => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "px-3 py-1 rounded-full bg-white border border-borderWarm hover:border-terracotta text-xs sm:text-sm font-semibold text-ink shadow-2xs transition";
+        btn.textContent = word;
+        btn.onclick = () => fillNextEmptyBlank(word);
+        pillsBox.appendChild(btn);
+      });
+
+      bankBox.classList.remove("hidden");
+    }
+
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function fillNextEmptyBlank(word) {
+      const inputs = Array.from(document.querySelectorAll("#displayStoryContainer .cloze-input"));
+      const target = inputs.find(inp => !inp.value.trim()) || inputs[0];
+      if (target) {
+        target.value = word;
+        target.classList.remove("correct", "wrong");
+      }
+    }
+
+    function handleBlankClick(inputEl) {
+      inputEl.classList.remove("correct", "wrong");
+    }
+
+    function giveClozeHint() {
+      const inputs = document.querySelectorAll("#displayStoryContainer .cloze-input");
+      inputs.forEach(inp => {
+        const ans = inp.getAttribute("data-answer") || "";
+        if (!inp.value.trim() && ans.length > 0) {
+          inp.value = ans.charAt(0);
+        }
+      });
+      showToast("已提示字首！");
+    }
+
+    function checkClozeAnswers() {
+      const inputs = document.querySelectorAll("#displayStoryContainer .cloze-input");
+      let allCorrect = true;
+      inputs.forEach(inp => {
+        const ans = (inp.getAttribute("data-answer") || "").trim().toLowerCase();
+        const val = inp.value.trim().toLowerCase();
+        inp.classList.remove("correct", "wrong");
+        if (val === ans) {
+          inp.classList.add("correct");
+        } else {
+          inp.classList.add("wrong");
+          allCorrect = false;
+        }
+      });
+      if (allCorrect && inputs.length > 0) {
+        showToast("🎉 太棒了！全部填空回答正確！");
+      } else {
+        showToast("還有空格需要修正喔，再試一次！");
+      }
+    }
+
+    function setReaderMode(mode) {
+      appState.readerDisplayMode = mode;
+      const map = {
+        "read": document.getElementById("modeBtnRead"),
+        "cloze-quiz": document.getElementById("modeBtnQuiz"),
+        "cloze-teacher": document.getElementById("modeBtnTeacher")
+      };
+      Object.entries(map).forEach(([k, btn]) => {
+        if (k === mode) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-terracotta shadow-sm transition";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-inkMuted hover:text-ink transition";
+        }
+      });
+      renderStep3Reader();
+    }
+
+    function prevPage() {
+      if (appState.currentPageIndex > 0) {
+        stopCurrentAudio();
+        appState.currentPageIndex--;
+        renderStep3Reader();
+      }
+    }
+
+    function nextPage() {
+      if (appState.currentPageIndex < appState.pages.length) {
+        stopCurrentAudio();
+        appState.currentPageIndex++;
+        renderStep3Reader();
+        if (appState.autoPlayBook) {
+          playCurrentPageAudio();
+        }
+      }
+    }
+
+    // ==================== 語音播放與連續伴讀控制 ====================
+    function togglePlayCurrentPageAudio() {
+      if (appState.isPlayingAudio) {
+        stopCurrentAudio();
+      } else {
+        playCurrentPageAudio();
+      }
+    }
+
+    async function playCurrentPageAudio() {
+      stopCurrentAudio();
+      const idx = appState.currentPageIndex;
+      const targetObj = idx === 0 ? appState.coverData : appState.pages[idx - 1];
+      if (!targetObj) return;
+
+      setAudioUiState(true);
+
+      // 若該頁尚無 Gemini TTS 音訊快取，即時補生成
+      if (!targetObj.audioDataUrl) {
+        const text = idx === 0 ? `${targetObj.title}` : targetObj.storyText;
+        targetObj.audioDataUrl = await generateGeminiTTS(text);
+      }
+
+      if (targetObj.audioDataUrl) {
+        activeAudioElement = new Audio(targetObj.audioDataUrl);
+        activeAudioElement.onended = () => {
+          setAudioUiState(false);
+          if (appState.autoPlayBook && appState.currentPageIndex < appState.pages.length) {
+            setTimeout(() => nextPage(), 700);
+          }
+        };
+        activeAudioElement.onerror = () => {
+          fallbackBrowserSpeech(idx === 0 ? targetObj.title : targetObj.storyText);
+        };
+        activeAudioElement.play().catch(() => {
+          fallbackBrowserSpeech(idx === 0 ? targetObj.title : targetObj.storyText);
+        });
+      } else {
+        fallbackBrowserSpeech(idx === 0 ? targetObj.title : targetObj.storyText);
+      }
+    }
+
+    function fallbackBrowserSpeech(text) {
+      if (!("speechSynthesis" in window)) {
+        setAudioUiState(false);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = appState.language === "en-US" ? "en-US" : "zh-TW";
+      utter.rate = 0.95;
+      utter.onend = () => {
+        setAudioUiState(false);
+        if (appState.autoPlayBook && appState.currentPageIndex < appState.pages.length) {
+          setTimeout(() => nextPage(), 700);
+        }
+      };
+      window.speechSynthesis.speak(utter);
+    }
+
+    function stopCurrentAudio() {
+      if (activeAudioElement) {
+        activeAudioElement.pause();
+        activeAudioElement = null;
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setAudioUiState(false);
+    }
+
+    function setAudioUiState(playing) {
+      appState.isPlayingAudio = playing;
+      document.getElementById("playAudioIcon").textContent = playing ? "⏹" : "▶";
+      document.getElementById("playAudioLabel").textContent = playing ? "停止語音" : "播放語音";
+    }
+
+    function toggleAutoPlayBook() {
+      appState.autoPlayBook = !appState.autoPlayBook;
+      const btn = document.getElementById("btnAutoPlay");
+      btn.textContent = appState.autoPlayBook ? "🔁 連續播放：開" : "🔁 連續播放：關";
+      if (appState.autoPlayBook && !appState.isPlayingAudio) {
+        playCurrentPageAudio();
+      }
+    }
+
+    // 單頁重繪與語音重新合成 (同步並行)
+    async function regenerateCurrentPageAssets() {
+      stopCurrentAudio();
+      const idx = appState.currentPageIndex;
+      const btn = document.getElementById("btnRegenPage");
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "⏳ 繪圖與語音同步重製中...";
+
+      try {
+        if (idx === 0) {
+          const prompt = `Children's picture book cover art. Art style: ${appState.artStylePrompt}. Scene: ${appState.coverData.imagePrompt}. No text.`;
+          const [newImg, newAudio] = await Promise.all([
+            generateCanvasAIImage(prompt, appState.coverData.title, Date.now()),
+            generateGeminiTTS(`${appState.coverData.title}。指導老師：${appState.coverData.author}`)
+          ]);
+          appState.coverData.imageDataUrl = newImg;
+          appState.coverData.audioDataUrl = newAudio;
+        } else {
+          const p = appState.pages[idx - 1];
+          const prompt = `Children's storybook illustration. Art style: ${appState.artStylePrompt}. Scene: ${p.imagePrompt}. Context: ${p.storyText.replace(/\n+/g, " ")}. No text.`;
+          const [newImg, newAudio] = await Promise.all([
+            generateCanvasAIImage(prompt, p.pageGoal, Date.now()),
+            generateGeminiTTS(p.storyText)
+          ]);
+          p.imageDataUrl = newImg;
+          p.audioDataUrl = newAudio;
+        }
+        renderStep3Reader();
+        showToast("本頁 AI 插圖與語音已同步重新生成！");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    }
+
+    // ==================== 穩定 16:9 全螢幕顯示控制器 ====================
+    async function toggleStableFullscreen() {
+      const stage = document.getElementById("fullscreenStage");
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (stage.requestFullscreen) {
+            await stage.requestFullscreen();
+          } else if (stage.webkitRequestFullscreen) {
+            stage.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      } catch (err) {
+        showToast("當前預覽容器限制全螢幕，已為您最佳化版面比例");
+      }
+    }
+
+    function syncFullscreenState() {
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      appState.isFullscreen = isFs;
+      const btn = document.getElementById("btnFullscreen");
+      if (btn) {
+        btn.innerHTML = isFs ? `<span>✕ 退出全螢幕</span>` : `<span>⛶ 全螢幕</span>`;
+      }
+    }
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenState);
+
+    // ==================== 匯出管道 1：獨立離線有聲電子書 (.html) 打包 Gemini TTS 語音與封面 ====================
+    function exportStandaloneHTML() {
+      showToast("正在封裝含完整 AI 插圖與 Gemini TTS 語音的離線 HTML...");
+      const exportPayload = JSON.stringify({
+        bookTitle: appState.bookTitle,
+        enableClozePractice: appState.enableClozePractice,
+        enableZhuyinMode: appState.enableZhuyinMode,
+        coverData: appState.coverData,
+        pages: appState.pages
+      });
+
+      const standaloneDoc = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${escapeHtml(appState.bookTitle)} - 互動有聲繪本</title>
 <style>
-body{margin:0;background:#F3E6CC;font-family:'Noto Sans TC',sans-serif;color:#3B2A20}
-h1{font-family:'Noto Serif TC',serif;font-weight:900;text-align:center;margin:32px 16px 8px;font-size:36px}
-.sub{text-align:center;margin:0 16px 24px;color:#7A4A2A}
-main{max-width:800px;margin:0 auto;padding:0 16px 48px;display:flex;flex-direction:column;gap:32px}
-.page{background:#FFF6E5;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(80,50,20,.18)}
-.art svg{display:block;width:100%;height:auto}
-.text{padding:24px 32px 28px}
-.no{font-size:14px;color:#9A4A2A;letter-spacing:.1em;margin-bottom:8px}
-.text p{margin:0;font-family:'Noto Serif TC',serif;font-weight:600;font-size:clamp(20px,3.4vw,26px);line-height:1.7}
-footer{text-align:center;padding:0 16px 40px;color:#7A4A2A;font-size:14px}
-@media print{body{background:#fff}.page{break-inside:avoid;box-shadow:none}}
+  @font-face {
+    font-family: 'BpmfIansui';
+    src: url('https://cdn.jsdelivr.net/gh/ButTaiwan/bpmfvs@master/fonts/BpmfIansui-Regular.woff2') format('woff2'),
+         url('https://raw.githubusercontent.com/ButTaiwan/bpmfvs/master/fonts/BpmfIansui-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: ${appState.enableZhuyinMode ? "'BpmfIansui', " : ""}"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; background: #FDFBF7; color: #2C302E; display: flex; flex-direction: column; min-height: 100vh; }
+  header { padding: 12px 24px; background: #F4EFE6; border-bottom: 1px solid #E6E0D6; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { cursor: pointer; border: 1px solid #E6E0D6; background: #FFFFFF; color: #2C302E; padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 14px; }
+  button.primary { background: #C86D51; color: #FFF; border-color: #C86D51; }
+  button.active { background: #5F7A61; color: #FFF; border-color: #5F7A61; }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .stage { width: 100%; max-width: 1180px; aspect-ratio: 16 / 9; background: #FDFBF7; border: 1px solid #E6E0D6; border-radius: 20px; box-shadow: 0 18px 40px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+  .left-pane { background: #F4EFE6; padding: 24px; display: flex; align-items: center; justify-content: center; }
+  .left-pane img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  .right-pane { padding: 36px; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
+  .story-text { white-space: pre-line; font-size: 23px; line-height: ${appState.enableZhuyinMode ? "2.15" : "1.85"}; font-family: ${appState.enableZhuyinMode ? "'BpmfIansui', " : ""}"Noto Serif TC", Georgia, serif; margin: auto 0; }
+  .prompt-box { background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: ${appState.enableZhuyinMode ? "2.0" : "1.6"}; }
+  .cloze-inp { border: none; border-bottom: 2px solid #C86D51; background: rgba(200,109,81,0.1); font-size: 20px; text-align: center; width: 5.5em; padding: 2px 6px; margin: 0 4px; border-radius: 4px; font-family: inherit; }
+  .word-bank { margin-top: 16px; padding: 12px; background: #F4EFE6; border-radius: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  @media (max-width: 768px) { .stage { grid-template-columns: 1fr; aspect-ratio: auto; } }
 </style>
 </head>
 <body>
-<h1>奶奶的排骨粥</h1>
-<p class="sub">改寫繪本・8 頁</p>
-<main>
-<section class="page" id="p1">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="小宇走在斑馬線上，左邊有一輛紅色汽車正開過來">
-<rect width="800" height="400" fill="#CFE9F0"/>
-<circle cx="690" cy="80" r="42" fill="#FFC857"/>
-<rect x="40" y="110" width="130" height="170" fill="#E8C9A0"/>
-<rect x="190" y="150" width="110" height="130" fill="#D8A7A0"/>
-<rect x="560" y="130" width="150" height="150" fill="#B9D6B0"/>
-<g fill="#FFF6E5"><rect x="60" y="130" width="28" height="28"/><rect x="104" y="130" width="28" height="28"/><rect x="60" y="176" width="28" height="28"/><rect x="104" y="176" width="28" height="28"/><rect x="210" y="170" width="26" height="26"/><rect x="254" y="170" width="26" height="26"/><rect x="580" y="150" width="28" height="28"/><rect x="630" y="150" width="28" height="28"/></g>
-<rect y="280" width="800" height="120" fill="#6B6B76"/>
-<g fill="#F4F1E8"><rect x="300" y="290" width="36" height="100"/><rect x="352" y="290" width="36" height="100"/><rect x="404" y="290" width="36" height="100"/><rect x="456" y="290" width="36" height="100"/><rect x="508" y="290" width="36" height="100"/></g>
-<g>
-<rect x="30" y="262" width="200" height="66" rx="18" fill="#D9552B"/>
-<path d="M70 262 L100 222 H170 L200 262 Z" fill="#D9552B"/>
-<path d="M84 262 L106 232 H134 V262 Z M142 262 V232 H166 L188 262 Z" fill="#CFE9F0"/>
-<circle cx="80" cy="330" r="23" fill="#2B2B2B"/><circle cx="180" cy="330" r="23" fill="#2B2B2B"/>
-<circle cx="80" cy="330" r="9" fill="#BBBBBB"/><circle cx="180" cy="330" r="9" fill="#BBBBBB"/>
-<circle cx="224" cy="290" r="8" fill="#FFC857"/>
-</g>
-<g stroke="#FFF6E5" stroke-width="5" stroke-linecap="round"><path d="M-10 270 H20"/><path d="M-10 296 H14"/></g>
-<g>
-<rect x="396" y="274" width="12" height="42" rx="4" fill="#3B4A78"/>
-<rect x="414" y="274" width="12" height="42" rx="4" fill="#3B4A78"/>
-<rect x="390" y="224" width="42" height="58" rx="12" fill="#4C9A6A"/>
-<circle cx="411" cy="196" r="27" fill="#F2C9A0"/>
-<path d="M384 192 Q386 164 411 164 Q436 164 438 192 Q420 178 384 192 Z" fill="#3A2A22"/>
-<circle cx="422" cy="198" r="3" fill="#3A2A22"/><circle cx="436" cy="198" r="3" fill="#3A2A22"/>
-<path d="M424 210 Q430 214 436 210" stroke="#3A2A22" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-</g>
-<path d="M300 150 L312 180 L288 180 Z" fill="#FFC857" stroke="#3B2A20" stroke-width="3" stroke-linejoin="round"/>
-<text x="300" y="176" font-size="22" font-weight="700" text-anchor="middle" fill="#3B2A20" font-family="sans-serif">!</text>
-</svg></div>
-<div class="text"><div class="no">第 1 頁</div><p>小宇念小學二年級的時候，有一天他過馬路，只顧著往前走，沒有注意左邊開來的車子。</p></div>
-</section>
-<section class="page" id="p2">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="小宇額頭貼著紗布，坐在餐桌前，看著硬硬的飯菜皺起眉頭，嘴裡缺了兩顆門牙">
-<rect width="800" height="400" fill="#F7DDB8"/>
-<rect x="60" y="50" width="170" height="150" rx="8" fill="#CFE9F0" stroke="#8A6A4A" stroke-width="8"/>
-<path d="M145 50 V200 M60 125 H230" stroke="#8A6A4A" stroke-width="6"/>
-<rect x="600" y="70" width="110" height="70" rx="6" fill="#E9B96E"/>
-<circle cx="655" cy="105" r="22" fill="#FFF6E5"/>
-<g>
-<rect x="330" y="300" width="22" height="100" fill="#8A5A34"/>
-<rect x="560" y="300" width="22" height="100" fill="#8A5A34"/>
-</g>
-<g>
-<rect x="352" y="210" width="190" height="96" rx="30" fill="#4C9A6A"/>
-<circle cx="447" cy="150" r="62" fill="#F2C9A0"/>
-<path d="M383 142 Q388 82 447 82 Q506 82 511 142 Q480 112 383 142 Z" fill="#3A2A22"/>
-<rect x="418" y="94" width="56" height="26" rx="4" fill="#FFFFFF" stroke="#C9C2B8" stroke-width="2" transform="rotate(-8 446 107)"/>
-<path d="M446 98 V118 M436 108 H456" stroke="#D9552B" stroke-width="4" transform="rotate(-8 446 107)"/>
-<circle cx="424" cy="150" r="5" fill="#3A2A22"/><circle cx="470" cy="150" r="5" fill="#3A2A22"/>
-<path d="M410 134 L436 140 M484 140 L458 134" stroke="#3A2A22" stroke-width="3.5" stroke-linecap="round"/>
-<ellipse cx="447" cy="184" rx="22" ry="14" fill="#7A2E2E"/>
-<rect x="428" y="172" width="11" height="12" fill="#FFFFFF"/><rect x="455" y="172" width="11" height="12" fill="#FFFFFF"/>
-<circle cx="404" cy="170" r="10" fill="#F4A58C" opacity="0.7"/><circle cx="490" cy="170" r="10" fill="#F4A58C" opacity="0.7"/>
-</g>
-<rect x="250" y="300" width="400" height="26" rx="8" fill="#C98B55"/>
-<g>
-<path d="M395 284 H505 Q500 316 450 316 Q400 316 395 284 Z" fill="#FFF6E5" stroke="#3B6EA5" stroke-width="5"/>
-<ellipse cx="450" cy="284" rx="55" ry="10" fill="#EFE5C8"/>
-<g fill="#D9A25A"><rect x="425" y="270" width="18" height="18" rx="3"/><rect x="450" y="268" width="18" height="18" rx="3"/><rect x="470" y="274" width="16" height="14" rx="3"/></g>
-</g>
-<g fill="#FFFFFF" stroke="#C9C2B8" stroke-width="2"><path d="M600 330 l10 -14 l10 14 z"/><path d="M640 340 l10 -14 l10 14 z"/></g>
-</svg></div>
-<div class="text"><div class="no">第 2 頁</div><p>「砰！」他被汽車撞倒了，還摔斷了兩顆門牙。接下來的日子，連吃飯對他都是一件難事。</p></div>
-</section>
-<section class="page" id="p3">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="奶奶站在爐子前，把排骨放進冒著熱氣的鍋子裡燙一燙">
-<rect width="800" height="400" fill="#F7DDB8"/>
-<g stroke="#E6C998" stroke-width="3"><path d="M0 100 H800 M0 200 H800 M0 300 H800"/><path d="M100 0 V400 M300 0 V400 M500 0 V400 M700 0 V400"/></g>
-<rect x="40" y="50" width="150" height="120" rx="8" fill="#CFE9F0" stroke="#3B8A94" stroke-width="8"/>
-<path d="M115 50 V170 M40 110 H190" stroke="#3B8A94" stroke-width="5"/>
-<rect x="0" y="320" width="800" height="80" fill="#C98B55"/>
-<rect x="470" y="270" width="250" height="60" rx="8" fill="#5B6670"/>
-<ellipse cx="540" cy="270" rx="34" ry="8" fill="#2F363C"/>
-<g>
-<rect x="500" y="190" width="180" height="90" rx="12" fill="#E9B96E" stroke="#8A5A34" stroke-width="5"/>
-<ellipse cx="590" cy="190" rx="90" ry="14" fill="#F4E3BE" stroke="#8A5A34" stroke-width="5"/>
-<ellipse cx="590" cy="192" rx="76" ry="9" fill="#EFE5C8"/>
-<g fill="#E58B7A" stroke="#9A4A3A" stroke-width="3"><rect x="560" y="180" width="30" height="16" rx="6" transform="rotate(-18 575 188)"/><rect x="598" y="184" width="32" height="16" rx="6" transform="rotate(12 614 192)"/></g>
-<path d="M550 170 q-14 -24 0 -46 q14 -22 0 -44 M590 160 q-14 -24 0 -46 q14 -22 0 -44 M630 170 q-14 -24 0 -46 q14 -22 0 -44" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.85"/>
-</g>
-<g>
-<rect x="215" y="250" width="26" height="76" rx="8" fill="#3B4A78"/><rect x="255" y="250" width="26" height="76" rx="8" fill="#3B4A78"/>
-<path d="M190 250 Q190 140 260 140 Q330 140 330 250 Z" fill="#E8683A"/>
-<path d="M215 170 H305 V260 H215 Z" fill="#4A78B8"/>
-<path d="M300 190 Q370 170 420 205" stroke="#E8683A" stroke-width="26" fill="none" stroke-linecap="round"/>
-<circle cx="426" cy="208" r="15" fill="#F2C9A0"/>
-<g fill="#E58B7A" stroke="#9A4A3A" stroke-width="3"><rect x="410" y="224" width="40" height="16" rx="6" transform="rotate(20 430 232)"/></g>
-<circle cx="260" cy="108" r="46" fill="#F2C9A0"/>
-<g fill="#B8B8C2"><circle cx="222" cy="86" r="20"/><circle cx="248" cy="70" r="22"/><circle cx="278" cy="68" r="22"/><circle cx="300" cy="88" r="20"/><circle cx="214" cy="112" r="14"/><circle cx="308" cy="112" r="14"/></g>
-<circle cx="244" cy="110" r="4" fill="#3A2A22"/><circle cx="276" cy="110" r="4" fill="#3A2A22"/>
-<path d="M240 128 Q260 144 280 128" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<circle cx="230" cy="124" r="8" fill="#F4A58C" opacity="0.7"/><circle cx="290" cy="124" r="8" fill="#F4A58C" opacity="0.7"/>
-</g>
-<g fill="#E58B7A" stroke="#9A4A3A" stroke-width="3"><rect x="120" y="296" width="60" height="22" rx="8"/></g>
-<path d="M100 300 q10 -16 20 0" stroke="#9A4A3A" stroke-width="0" fill="none"/>
-</svg></div>
-<div class="text"><div class="no">第 3 頁</div><p>奶奶好心疼，決定為他煮一鍋湯鮮味美的排骨粥。她先把新鮮的排骨放進滾水裡，燙一燙。</p></div>
-</section>
-<section class="page" id="p4">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="一大鍋粥冒著熱氣，香菇、米粒和青菜一樣一樣落進鍋子裡">
-<rect width="800" height="400" fill="#F7DDB8"/>
-<circle cx="400" cy="210" r="190" fill="#FBE9C6"/>
-<path d="M360 150 q-16 -30 0 -60 q16 -30 0 -60 M410 140 q-16 -30 0 -60 q16 -30 0 -60 M460 150 q-16 -30 0 -60 q16 -30 0 -60" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
-<g>
-<path d="M240 250 H560 Q555 370 400 370 Q245 370 240 250 Z" fill="#E9B96E" stroke="#8A5A34" stroke-width="6"/>
-<ellipse cx="400" cy="250" rx="160" ry="30" fill="#8A5A34"/>
-<ellipse cx="400" cy="252" rx="146" ry="23" fill="#F4EAD0"/>
-<path d="M300 252 q30 -10 60 0 q30 10 60 0 q30 -10 60 0" stroke="#D9C9A0" stroke-width="4" fill="none" stroke-linecap="round"/>
-<path d="M240 250 Q200 245 205 270" stroke="#8A5A34" stroke-width="8" fill="none" stroke-linecap="round"/>
-<path d="M560 250 Q600 245 595 270" stroke="#8A5A34" stroke-width="8" fill="none" stroke-linecap="round"/>
-<g fill="#D9552B"><circle cx="330" cy="318" r="9"/><circle cx="400" cy="332" r="9"/><circle cx="470" cy="318" r="9"/></g>
-</g>
-<g>
-<ellipse cx="180" cy="90" rx="38" ry="26" fill="#8A5A34"/>
-<path d="M150 88 Q180 62 210 88" stroke="#C99A6A" stroke-width="5" fill="none" stroke-linecap="round"/>
-<path d="M170 100 Q180 108 190 100" stroke="#C99A6A" stroke-width="4" fill="none" stroke-linecap="round"/>
-<path d="M210 150 L214 192" stroke="#E8683A" stroke-width="3" stroke-dasharray="4 8" stroke-linecap="round"/>
-</g>
-<g fill="#FFFFFF" stroke="#D8D0C0" stroke-width="2">
-<ellipse cx="340" cy="60" rx="8" ry="4" transform="rotate(30 340 60)"/><ellipse cx="372" cy="82" rx="8" ry="4" transform="rotate(-20 372 82)"/><ellipse cx="320" cy="108" rx="8" ry="4" transform="rotate(60 320 108)"/><ellipse cx="364" cy="128" rx="8" ry="4" transform="rotate(10 364 128)"/><ellipse cx="392" cy="48" rx="8" ry="4" transform="rotate(-50 392 48)"/>
-</g>
-<g>
-<path d="M620 70 q26 -18 52 0 q-26 30 -52 0 Z" fill="#6DBF5A" stroke="#3F8A3A" stroke-width="3"/>
-<path d="M650 115 q26 -18 52 0 q-26 30 -52 0 Z" fill="#8ED06B" stroke="#3F8A3A" stroke-width="3"/>
-<path d="M600 130 q26 -18 52 0 q-26 30 -52 0 Z" fill="#6DBF5A" stroke="#3F8A3A" stroke-width="3"/>
-</g>
-<g fill="#E58B7A" stroke="#9A4A3A" stroke-width="3">
-<rect x="60" y="250" width="58" height="22" rx="9" transform="rotate(-16 89 261)"/>
-<rect x="650" y="270" width="58" height="22" rx="9" transform="rotate(14 679 281)"/>
-</g>
-</svg></div>
-<div class="text"><div class="no">第 4 頁</div><p>她加進乾香菇，換過水，慢慢熬出湯底；再放入洗好的米，煮到軟綿綿，最後撒上青菜，香噴噴的粥就完成了。</p></div>
-</section>
-<section class="page" id="p5">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="奶奶和小宇面對面坐在餐桌前，中間是一鍋熱粥，桌邊的水杯裡泡著奶奶的假牙">
-<rect width="800" height="400" fill="#F7DDB8"/>
-<rect x="330" y="20" width="140" height="10" fill="#3F7A55"/>
-<path d="M350 30 H450 L470 80 H330 Z" fill="#5FA877"/>
-<path d="M400 80 L330 400 H470 Z" fill="#FFF3B0" opacity="0.35"/>
-<g>
-<rect x="60" y="130" width="190" height="270" fill="#C98B55" opacity="0" />
-<path d="M120 250 Q120 150 190 150 Q260 150 260 250 V330 H120 Z" fill="#E8683A"/>
-<path d="M150 190 H235 V330 H150 Z" fill="#4A78B8"/>
-<circle cx="190" cy="120" r="46" fill="#F2C9A0"/>
-<g fill="#B8B8C2"><circle cx="152" cy="98" r="20"/><circle cx="178" cy="82" r="22"/><circle cx="208" cy="80" r="22"/><circle cx="230" cy="100" r="20"/><circle cx="144" cy="124" r="14"/><circle cx="238" cy="124" r="14"/></g>
-<path d="M170 122 q6 -6 12 0 M204 122 q6 -6 12 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M170 140 Q190 156 210 140 Z" fill="#7A2E2E"/>
-<rect x="176" y="140" width="28" height="7" fill="#FFFFFF"/>
-<circle cx="160" cy="136" r="8" fill="#F4A58C" opacity="0.7"/><circle cx="220" cy="136" r="8" fill="#F4A58C" opacity="0.7"/>
-</g>
-<g>
-<path d="M545 330 V260 Q545 190 610 190 Q675 190 675 260 V330 Z" fill="#4C9A6A"/>
-<circle cx="610" cy="150" r="40" fill="#F2C9A0"/>
-<path d="M570 146 Q572 106 610 106 Q648 106 650 146 Q620 128 570 146 Z" fill="#3A2A22"/>
-<path d="M590 150 q6 -6 12 0 M622 150 q6 -6 12 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M592 166 Q612 182 632 166 Z" fill="#7A2E2E"/>
-<rect x="598" y="166" width="10" height="7" fill="#FFFFFF"/><rect x="618" y="166" width="10" height="7" fill="#FFFFFF"/>
-<circle cx="580" cy="164" r="8" fill="#F4A58C" opacity="0.7"/><circle cx="642" cy="164" r="8" fill="#F4A58C" opacity="0.7"/>
-</g>
-<rect x="0" y="300" width="800" height="100" fill="#C98B55"/>
-<rect x="0" y="300" width="800" height="14" fill="#A8703F"/>
-<g>
-<path d="M330 290 H470 Q466 336 400 336 Q334 336 330 290 Z" fill="#E9B96E" stroke="#8A5A34" stroke-width="5"/>
-<ellipse cx="400" cy="290" rx="70" ry="12" fill="#F4EAD0" stroke="#8A5A34" stroke-width="5"/>
-<path d="M375 270 q-10 -18 0 -36 M400 266 q-10 -18 0 -36 M425 270 q-10 -18 0 -36" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>
-</g>
-<g>
-<path d="M230 316 H290 Q288 350 260 350 Q232 350 230 316 Z" fill="#FFF6E5" stroke="#3B6EA5" stroke-width="4"/>
-<path d="M510 316 H570 Q568 350 540 350 Q512 350 510 316 Z" fill="#FFF6E5" stroke="#3B6EA5" stroke-width="4"/>
-</g>
-<g>
-<path d="M690 270 H746 L742 340 H694 Z" fill="#CFE9F0" stroke="#7BA9B8" stroke-width="4" opacity="0.95"/>
-<path d="M702 308 Q718 292 734 308 V326 H702 Z" fill="#FFFFFF" stroke="#C9C2B8" stroke-width="2"/>
-<path d="M702 308 Q718 300 734 308" fill="none" stroke="#F4A58C" stroke-width="4"/>
-<path d="M694 292 H742" stroke="#FFFFFF" stroke-width="3" opacity="0.8"/>
-</g>
-</svg></div>
-<div class="text"><div class="no">第 5 頁</div><p>原來奶奶的牙齒早就換成假牙，軟綿綿的排骨粥，正好她也吃得下。從那天起，小宇成了奶奶餐桌上的好伙伴。</p></div>
-</section>
-<section class="page" id="p6">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="清晨的餐桌上，戴著牙套的少年小宇大口喝粥，奶奶笑著看他">
-<rect width="800" height="400" fill="#FBE3B6"/>
-<circle cx="130" cy="110" r="58" fill="#FFC857"/>
-<g stroke="#FFC857" stroke-width="6" stroke-linecap="round"><path d="M130 24 V4 M130 196 V216 M44 110 H24 M216 110 H236 M70 50 L56 36 M190 50 L204 36 M70 170 L56 184 M190 170 L204 184"/></g>
-<rect x="0" y="300" width="800" height="100" fill="#C98B55"/>
-<rect x="0" y="300" width="800" height="14" fill="#A8703F"/>
-<g>
-<path d="M290 290 H430 Q426 336 360 336 Q294 336 290 290 Z" fill="#E9B96E" stroke="#8A5A34" stroke-width="5"/>
-<ellipse cx="360" cy="290" rx="70" ry="12" fill="#F4EAD0" stroke="#8A5A34" stroke-width="5"/>
-<path d="M335 270 q-10 -18 0 -36 M360 266 q-10 -18 0 -36 M385 270 q-10 -18 0 -36" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>
-</g>
-<g>
-<path d="M560 330 V250 Q560 180 640 180 Q720 180 720 250 V330 Z" fill="#4C9A6A"/>
-<circle cx="640" cy="128" r="52" fill="#F2C9A0"/>
-<path d="M590 120 Q596 70 640 70 Q684 70 690 120 Q660 100 590 120 Z" fill="#3A2A22"/>
-<path d="M612 130 q6 -6 12 0 M652 130 q6 -6 12 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M612 150 Q640 172 668 150 Z" fill="#7A2E2E"/>
-<rect x="616" y="150" width="48" height="9" rx="3" fill="#FFFFFF"/>
-<path d="M616 154.5 H664" stroke="#8A9AA8" stroke-width="2.5"/>
-<g fill="#8A9AA8"><rect x="620" y="152" width="4" height="5"/><rect x="632" y="152" width="4" height="5"/><rect x="644" y="152" width="4" height="5"/><rect x="656" y="152" width="4" height="5"/></g>
-<circle cx="598" cy="146" r="9" fill="#F4A58C" opacity="0.7"/><circle cx="682" cy="146" r="9" fill="#F4A58C" opacity="0.7"/>
-<path d="M560 250 Q500 260 470 290" stroke="#4C9A6A" stroke-width="26" fill="none" stroke-linecap="round"/>
-<circle cx="466" cy="294" r="14" fill="#F2C9A0"/>
-<path d="M440 300 H500 Q498 334 470 334 Q442 334 440 300 Z" fill="#FFF6E5" stroke="#3B6EA5" stroke-width="4"/>
-</g>
-<g>
-<path d="M70 330 V250 Q70 180 140 180 Q210 180 210 250 V330 Z" fill="#E8683A"/>
-<path d="M100 215 H180 V330 H100 Z" fill="#4A78B8"/>
-<circle cx="140" cy="132" r="44" fill="#F2C9A0"/>
-<g fill="#B8B8C2"><circle cx="104" cy="112" r="19"/><circle cx="128" cy="96" r="21"/><circle cx="156" cy="94" r="21"/><circle cx="178" cy="112" r="19"/><circle cx="98" cy="136" r="13"/><circle cx="186" cy="136" r="13"/></g>
-<path d="M122 136 q6 -6 12 0 M150 136 q6 -6 12 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M122 152 Q142 168 162 152 Z" fill="#7A2E2E"/>
-<circle cx="112" cy="150" r="8" fill="#F4A58C" opacity="0.7"/><circle cx="170" cy="150" r="8" fill="#F4A58C" opacity="0.7"/>
-</g>
-<path d="M300 330 H420" stroke="#A8703F" stroke-width="0"/>
-</svg></div>
-<div class="text"><div class="no">第 6 頁</div><p>上了國中，小宇開始矯正牙齒，肚子也特別容易餓。於是每天清晨，這一對「牙齒不好的人」又一起坐下來喝粥，每次都吃得碗底朝天。</p></div>
-</section>
-<section class="page" id="p7">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="夜裡，長大的小宇拖著行李回到家，奶奶在亮著燈的門口笑著問他明天要不要一起吃粥">
-<rect width="800" height="400" fill="#2E3A5C"/>
-<circle cx="670" cy="70" r="34" fill="#FFF3B0"/>
-<circle cx="684" cy="62" r="30" fill="#2E3A5C"/>
-<g fill="#FFF3B0"><circle cx="100" cy="60" r="3"/><circle cx="220" cy="110" r="2.5"/><circle cx="360" cy="50" r="3"/><circle cx="520" cy="100" r="2.5"/><circle cx="590" cy="40" r="2"/><circle cx="450" cy="30" r="2"/><circle cx="60" cy="140" r="2"/></g>
-<rect x="0" y="330" width="800" height="70" fill="#4A4F66"/>
-<rect x="300" y="120" width="440" height="215" fill="#E8C9A0"/>
-<path d="M280 124 L520 50 L760 124 Z" fill="#B5543A"/>
-<rect x="340" y="170" width="90" height="80" fill="#FFD98A"/>
-<path d="M385 170 V250 M340 210 H430" stroke="#8A5A34" stroke-width="5"/>
-<rect x="580" y="170" width="90" height="80" fill="#FFD98A"/>
-<path d="M625 170 V250 M580 210 H670" stroke="#8A5A34" stroke-width="5"/>
-<rect x="450" y="190" width="110" height="145" rx="6" fill="#8A5A34"/>
-<rect x="462" y="202" width="86" height="133" fill="#FFD98A"/>
-<path d="M405 335 H610 V345 H405 Z" fill="#B8B8C2" opacity="0"/>
-<g>
-<path d="M470 335 V280 Q470 232 505 232 Q540 232 540 280 V335 Z" fill="#E8683A"/>
-<path d="M486 262 H526 V335 H486 Z" fill="#4A78B8"/>
-<circle cx="505" cy="206" r="24" fill="#F2C9A0"/>
-<g fill="#B8B8C2"><circle cx="486" cy="194" r="10"/><circle cx="499" cy="186" r="11"/><circle cx="515" cy="185" r="11"/><circle cx="526" cy="195" r="10"/></g>
-<path d="M494 208 q4 -4 8 0 M510 208 q4 -4 8 0" stroke="#3A2A22" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-<path d="M494 218 Q506 228 518 218 Z" fill="#7A2E2E"/>
-</g>
-<g>
-<rect x="232" y="276" width="20" height="60" rx="6" fill="#2B3A5C" stroke="#1F2A44" stroke-width="2"/>
-<rect x="260" y="276" width="20" height="60" rx="6" fill="#2B3A5C" stroke="#1F2A44" stroke-width="2"/>
-<rect x="222" y="196" width="68" height="88" rx="18" fill="#4C9A6A"/>
-<circle cx="256" cy="156" r="36" fill="#F2C9A0"/>
-<path d="M220 150 Q224 112 256 112 Q288 112 292 150 Q264 130 220 150 Z" fill="#3A2A22"/>
-<path d="M240 160 q4 -4 8 0 M264 160 q4 -4 8 0" stroke="#3A2A22" stroke-width="3" fill="none" stroke-linecap="round"/>
-<path d="M238 172 Q256 188 274 172 Z" fill="#7A2E2E"/>
-<rect x="243" y="172" width="26" height="7" rx="2" fill="#FFFFFF"/>
-<rect x="150" y="262" width="62" height="70" rx="8" fill="#D9552B" stroke="#8A2E1A" stroke-width="3"/>
-<path d="M170 262 V248 H192 V262" fill="none" stroke="#8A2E1A" stroke-width="4"/>
-<path d="M290 220 L214 268" stroke="#4C9A6A" stroke-width="16" stroke-linecap="round"/>
-</g>
-<g>
-<path d="M380 92 H600 Q616 92 616 108 V140 Q616 156 600 156 H520 L500 178 L496 156 H380 Q364 156 364 140 V108 Q364 92 380 92 Z" fill="#FFF6E5" opacity="0"/>
-<path d="M410 40 H620 Q636 40 636 56 V96 Q636 112 620 112 H560 L540 140 L536 112 H410 Q394 112 394 96 V56 Q394 40 410 40 Z" fill="#FFF6E5" stroke="#E9B96E" stroke-width="3"/>
-<path d="M440 70 H590 M440 90 H560" stroke="#E9B96E" stroke-width="0"/>
-<path d="M430 88 Q430 98 450 98 Q470 98 470 88 Z M426 88 H474" fill="#E9B96E" stroke="#8A5A34" stroke-width="3" stroke-linejoin="round"/>
-<path d="M440 76 q-6 -10 0 -20 M452 76 q-6 -10 0 -20 M464 76 q-6 -10 0 -20" stroke="#B8B8C2" stroke-width="3" fill="none" stroke-linecap="round"/>
-<text x="490" y="85" font-size="22" font-weight="500" fill="#3B2A20" font-family="'Noto Sans TC',sans-serif">一起吃粥嗎？</text>
-</g>
-</svg></div>
-<div class="text"><div class="no">第 7 頁</div><p>如今小宇有一口整齊的牙齒，奶奶的假牙卻已經戴不上了。每次他從外地回家，奶奶總會在睡前問：「明天早餐，要不要一起吃粥？」</p></div>
-</section>
-<section class="page" id="p8">
-<div class="art"><svg width="100%" height="auto" viewBox="0 0 800 400" role="img" aria-label="清晨的陽光照進廚房，奶奶笑開了沒有牙齒的嘴，看著長大的小宇開心地喝粥，鍋子冒出暖暖的熱氣">
-<rect width="800" height="400" fill="#FFE6B0"/>
-<g opacity="0.55" fill="#FFF3B0"><path d="M0 0 L260 0 L420 400 L120 400 Z"/><path d="M300 0 L440 0 L560 400 L440 400 Z"/></g>
-<rect x="50" y="40" width="200" height="170" rx="8" fill="#CFE9F0" stroke="#3B8A94" stroke-width="8"/>
-<path d="M150 40 V210 M50 125 H250" stroke="#3B8A94" stroke-width="6"/>
-<circle cx="200" cy="90" r="26" fill="#FFC857"/>
-<rect x="0" y="300" width="800" height="100" fill="#C98B55"/>
-<rect x="0" y="300" width="800" height="14" fill="#A8703F"/>
-<g>
-<path d="M330 292 H470 Q466 338 400 338 Q334 338 330 292 Z" fill="#E9B96E" stroke="#8A5A34" stroke-width="5"/>
-<ellipse cx="400" cy="292" rx="70" ry="12" fill="#F4EAD0" stroke="#8A5A34" stroke-width="5"/>
-<g fill="#8A5A34"><ellipse cx="380" cy="292" rx="8" ry="4"/><ellipse cx="410" cy="294" rx="8" ry="4"/></g>
-<g fill="#6DBF5A"><circle cx="396" cy="288" r="3"/><circle cx="428" cy="292" r="3"/><circle cx="372" cy="296" r="3"/></g>
-<path d="M370 270 q-14 -26 0 -52 q14 -26 0 -52 M400 262 q-14 -26 0 -52 q14 -26 0 -52 M430 270 q-14 -26 0 -52 q14 -26 0 -52" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.95"/>
-</g>
-<g>
-<path d="M60 330 V260 Q60 190 130 190 Q200 190 200 260 V330 Z" fill="#E8683A"/>
-<path d="M90 226 H170 V330 H90 Z" fill="#4A78B8"/>
-<circle cx="130" cy="144" r="46" fill="#F2C9A0"/>
-<g fill="#B8B8C2"><circle cx="92" cy="122" r="20"/><circle cx="118" cy="106" r="22"/><circle cx="148" cy="104" r="22"/><circle cx="170" cy="124" r="20"/><circle cx="86" cy="150" r="14"/><circle cx="178" cy="150" r="14"/></g>
-<path d="M108 148 q8 -9 16 0 M138 148 q8 -9 16 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M106 164 Q132 190 158 164 Q132 172 106 164 Z" fill="#7A2E2E"/>
-<circle cx="98" cy="162" r="9" fill="#F4A58C" opacity="0.75"/><circle cx="164" cy="162" r="9" fill="#F4A58C" opacity="0.75"/>
-</g>
-<g>
-<path d="M560 330 V250 Q560 180 640 180 Q720 180 720 250 V330 Z" fill="#4C9A6A"/>
-<circle cx="640" cy="128" r="50" fill="#F2C9A0"/>
-<path d="M592 120 Q598 72 640 72 Q682 72 688 120 Q660 100 592 120 Z" fill="#3A2A22"/>
-<path d="M614 130 q6 -6 12 0 M654 130 q6 -6 12 0" stroke="#3A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-<path d="M616 150 Q640 172 664 150 Z" fill="#7A2E2E"/>
-<rect x="620" y="150" width="40" height="8" rx="3" fill="#FFFFFF"/>
-<circle cx="602" cy="148" r="9" fill="#F4A58C" opacity="0.7"/><circle cx="678" cy="148" r="9" fill="#F4A58C" opacity="0.7"/>
-<path d="M565 250 Q520 252 500 286" stroke="#4C9A6A" stroke-width="26" fill="none" stroke-linecap="round"/>
-<circle cx="496" cy="290" r="14" fill="#F2C9A0"/>
-<path d="M470 296 H530 Q528 330 500 330 Q472 330 470 296 Z" fill="#FFF6E5" stroke="#3B6EA5" stroke-width="4"/>
-</g>
-<g fill="#FF8FA3"><path d="M300 90 c-8 -14 -26 -2 -14 12 l14 14 l14 -14 c12 -14 -6 -26 -14 -12 z" transform="translate(0 0)"/></g>
-</svg></div>
-<div class="text"><div class="no">第 8 頁</div><p>一大清早，濃濃的粥香在晨光裡飄著熱氣。奶奶一邊看著小宇喝粥，一邊笑開了沒有牙齒的嘴，這碗粥，暖了他的胃，也暖了他的心。</p></div>
-</section>
+<header>
+  <div><strong>📖 ${escapeHtml(appState.bookTitle)}</strong> <span id="pgLabel" style="margin-left:10px;color:#686D6A;font-size:14px;"></span></div>
+  <div class="toolbar">
+    <button onclick="go(-1)">◀ 上一頁</button>
+    <button onclick="go(1)">下一頁 ▶</button>
+    <button class="primary" onclick="playAudio()" id="playBtn">▶ 播放語音</button>
+    ${appState.enableClozePractice ? `<button onclick="setMode('read')" id="mRead" class="active">純享朗讀</button><button onclick="setMode('quiz')" id="mQuiz">填空練習</button>` : ``}
+    <button onclick="toggleFs()">⛶ 全螢幕</button>
+  </div>
+</header>
+<main id="fsBox">
+  <div class="stage">
+    <div class="left-pane"><img id="pic" src="" alt="illustration" /></div>
+    <div class="right-pane">
+      <div id="goalTag" style="color:#5F7A61;font-weight:700;font-size:14px;"></div>
+      <div id="textBox" class="story-text"></div>
+      <div id="bankBox" class="word-bank" style="display:none;"></div>
+      <div id="qBox" class="prompt-box"></div>
+    </div>
+  </div>
 </main>
-<footer>故事改寫自國小國語課文〈奶奶的排骨粥〉的情節，文字與插圖皆為重新創作。</footer>
+<script>
+  const DATA = ${exportPayload};
+  let idx = 0, mode = 'read', audio = null;
+  function render() {
+    const total = DATA.pages.length;
+    document.getElementById('pgLabel').textContent = idx === 0 ? '封面' : ('第 ' + idx + ' / ' + total + ' 頁');
+    const pic = document.getElementById('pic');
+    const textBox = document.getElementById('textBox');
+    const goalTag = document.getElementById('goalTag');
+    const qBox = document.getElementById('qBox');
+    const bankBox = document.getElementById('bankBox');
+    if (idx === 0) {
+      pic.src = DATA.coverData.imageDataUrl;
+      goalTag.textContent = DATA.coverData.subtitle || '有聲繪本';
+      textBox.innerHTML = '<h1 style="margin:0 0 12px 0;font-size:36px;">' + DATA.coverData.title + '</h1><p style="font-size:18px;color:#686D6A;">指導教師：' + DATA.coverData.author + '</p>';
+      qBox.style.display = 'none';
+      bankBox.style.display = 'none';
+    } else {
+      const p = DATA.pages[idx - 1];
+      pic.src = p.imageDataUrl;
+      goalTag.textContent = '第 ' + idx + ' 頁・' + p.pageGoal;
+      qBox.style.display = 'block';
+      qBox.innerHTML = '<strong>💬 課堂提問：</strong>' + (p.pedagogicalPrompt || '');
+      if (mode === 'quiz' && p.clozeKeywords && p.clozeKeywords.length) {
+        let html = p.storyText;
+        p.clozeKeywords.forEach(kw => {
+          html = html.replace(kw, '<input class="cloze-inp" data-ans="' + kw + '" placeholder="?" />');
+        });
+        textBox.innerHTML = html;
+        bankBox.style.display = 'flex';
+        bankBox.innerHTML = '<strong>詞彙庫：</strong>' + p.clozeKeywords.map(w => '<button onclick="fillWord(\\''+w+'\\')">' + w + '</button>').join('') + '<button class="primary" onclick="checkAns()">核對答案</button>';
+      } else {
+        textBox.textContent = p.storyText;
+        bankBox.style.display = 'none';
+      }
+    }
+  }
+  function fillWord(w) {
+    const inps = Array.from(document.querySelectorAll('.cloze-inp'));
+    const empty = inps.find(i => !i.value) || inps[0];
+    if (empty) empty.value = w;
+  }
+  function checkAns() {
+    document.querySelectorAll('.cloze-inp').forEach(i => {
+      i.style.background = (i.value.trim() === i.getAttribute('data-ans')) ? '#DCFCE7' : '#FEE2E2';
+    });
+  }
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mRead').className = m === 'read' ? 'active' : '';
+    document.getElementById('mQuiz').className = m === 'quiz' ? 'active' : '';
+    render();
+  }
+  function go(dir) {
+    if (audio) { audio.pause(); audio = null; }
+    idx = Math.max(0, Math.min(DATA.pages.length, idx + dir));
+    render();
+  }
+  function playAudio() {
+    if (audio) { audio.pause(); audio = null; return; }
+    const item = idx === 0 ? DATA.coverData : DATA.pages[idx - 1];
+    if (item && item.audioDataUrl) {
+      audio = new Audio(item.audioDataUrl);
+      audio.onended = () => { audio = null; };
+      audio.play();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(idx === 0 ? DATA.coverData.title : item.storyText));
+    }
+  }
+  function toggleFs() {
+    const el = document.getElementById('fsBox');
+    if (!document.fullscreenElement) el.requestFullscreen(); else document.exitFullscreen();
+  }
+  render();
+<\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([standaloneDoc], { type: "text/html;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${appState.bookTitle}_互動有聲繪本.html`;
+      a.click();
+      showToast("✅ 已匯出包含 Gemini TTS 語音與封面圖的獨立離線 HTML！");
+    }
+
+    // ==================== 匯出管道 2：1:1 排版一致課堂演示簡報 (.pptx) ====================
+    async function exportPresentationPPTX() {
+      showToast("正在生成 16:9 課堂教學簡報 (.pptx)...");
+      try {
+        const pptx = new PptxGenJS();
+        pptx.layout = "LAYOUT_16x9";
+        pptx.author = appState.author;
+        pptx.title = appState.bookTitle;
+
+        // 1. 封面頁 (Cover Slide)
+        const coverSlide = pptx.addSlide();
+        coverSlide.background = { color: "FDFBF7" };
+        if (appState.coverData.imageDataUrl) {
+          coverSlide.addImage({
+            data: appState.coverData.imageDataUrl,
+            x: 0.5, y: 0.5, w: 4.4, h: 4.6,
+            sizing: { type: "cover", w: 4.4, h: 4.6 }
+          });
+        }
+        coverSlide.addText(appState.coverData.subtitle || "智慧教育有聲繪本", {
+          x: 5.2, y: 1.4, w: 4.3, h: 0.4,
+          fontSize: 14, color: "5F7A61", bold: true, fontFace: "Microsoft JhengHei"
+        });
+        coverSlide.addText(appState.coverData.title, {
+          x: 5.2, y: 1.9, w: 4.3, h: 1.4,
+          fontSize: 32, color: "2C302E", bold: true, fontFace: "Microsoft JhengHei", valign: "top"
+        });
+        coverSlide.addText(`指導教師：${appState.coverData.author}`, {
+          x: 5.2, y: 3.6, w: 4.3, h: 0.5,
+          fontSize: 16, color: "686D6A", fontFace: "Microsoft JhengHei"
+        });
+
+        // 2. 各頁情節內頁 (左圖右文 + 保留 \n 段落換行排版 + 底部教學提問)
+        appState.pages.forEach((p, i) => {
+          const slide = pptx.addSlide();
+          slide.background = { color: "FDFBF7" };
+
+          if (p.imageDataUrl) {
+            slide.addImage({
+              data: p.imageDataUrl,
+              x: 0.45, y: 0.45, w: 4.5, h: 4.7,
+              sizing: { type: "contain", w: 4.5, h: 4.7 }
+            });
+          }
+
+          slide.addText(`Page ${i + 1} ・ ${p.pageGoal}`, {
+            x: 5.2, y: 0.45, w: 4.3, h: 0.35,
+            fontSize: 12, color: "5F7A61", bold: true, fontFace: "Microsoft JhengHei"
+          });
+
+          // 將 \n 切分為獨立段落物件，確保 PowerPoint 完美還原換行與行距
+          const paragraphs = String(p.storyText || "").split("\n").map(line => ({
+            text: line,
+            options: { breakLine: true, fontSize: 20, color: "2C302E", fontFace: "Microsoft JhengHei", paraSpaceAfter: 10 }
+          }));
+
+          slide.addText(paragraphs, {
+            x: 5.2, y: 0.95, w: 4.3, h: 3.3,
+            valign: "middle", lineSpacingMultiple: 1.3
+          });
+
+          if (p.pedagogicalPrompt) {
+            slide.addShape(pptx.ShapeType.roundRect, {
+              x: 5.2, y: 4.4, w: 4.3, h: 0.75,
+              fill: { color: "FFFBEB" }, line: { color: "FDE68A", pt: 1 }
+            });
+            slide.addText(`💬 課堂提問：${p.pedagogicalPrompt}`, {
+              x: 5.3, y: 4.45, w: 4.1, h: 0.65,
+              fontSize: 12, color: "B0583E", fontFace: "Microsoft JhengHei", valign: "middle"
+            });
+          }
+        });
+
+        // 3. 若啟用填空模式，附加封底「克漏字解答與教學總結頁」
+        if (appState.enableClozePractice) {
+          const ansSlide = pptx.addSlide();
+          ansSlide.background = { color: "F4EFE6" };
+          ansSlide.addText("👩‍🏫 全書克漏字核心詞彙與教學解答總表", {
+            x: 0.6, y: 0.5, w: 8.8, h: 0.6,
+            fontSize: 24, bold: true, color: "2C302E", fontFace: "Microsoft JhengHei"
+          });
+          const rows = appState.pages.map((p, idx) => [
+            `第 ${idx + 1} 頁 (${p.pageGoal})`,
+            (p.clozeKeywords || []).join("、") || "無",
+            p.pedagogicalPrompt || ""
+          ]);
+          ansSlide.addTable([
+            [
+              { text: "頁碼與情節", options: { bold: true, fill: "C86D51", color: "FFFFFF" } },
+              { text: "核心填空詞彙", options: { bold: true, fill: "C86D51", color: "FFFFFF" } },
+              { text: "課堂引導提問", options: { bold: true, fill: "C86D51", color: "FFFFFF" } }
+            ],
+            ...rows
+          ], {
+            x: 0.6, y: 1.3, w: 8.8,
+            fontSize: 13, fontFace: "Microsoft JhengHei",
+            border: { pt: 1, color: "E6E0D6" }, fill: "FFFFFF"
+          });
+        }
+
+        await pptx.writeFile({ fileName: `${appState.bookTitle}_課堂演示簡報.pptx` });
+        showToast("✅ 16:9 課堂演示簡報 (.pptx) 下載完成！");
+      } catch (err) {
+        console.error("PPTX 匯出錯誤:", err);
+        showToast("簡報生成失敗，請稍後再試");
+      }
+    }
+
+    // ==================== 匯出管道 3：印刷級融入教學設計 PDF (讀本冊 / 素養學習單) ====================
+    function openPdfModal() {
+      document.getElementById("pdfExportModal").classList.remove("hidden");
+      updatePdfTypeSelection();
+    }
+
+    function closePdfModal() {
+      document.getElementById("pdfExportModal").classList.add("hidden");
+    }
+
+    function updatePdfTypeSelection() {
+      const selected = document.querySelector('input[name="pdfLayoutType"]:checked')?.value;
+      const cardBook = document.getElementById("pdfTypeCardBook");
+      const cardSheet = document.getElementById("pdfTypeCardWorksheet");
+      if (selected === "landscape-book") {
+        cardBook.className = "cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-terracotta bg-terracotta/5";
+        cardSheet.className = "cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-borderWarm bg-white";
+      } else {
+        cardSheet.className = "cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-terracotta bg-terracotta/5";
+        cardBook.className = "cursor-pointer border-2 rounded-xl p-4 transition flex flex-col justify-between border-borderWarm bg-white";
+      }
+    }
+
+    async function executePdfGeneration() {
+      const layoutType = document.querySelector('input[name="pdfLayoutType"]:checked')?.value || "landscape-book";
+      const isGrayscale = document.getElementById("pdfGrayscaleToggle").checked;
+      const btn = document.getElementById("btnRunPdfExport");
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "⏳ 正在排版渲染 PDF...";
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const stage = document.getElementById("pdfRenderStage");
+        stage.innerHTML = "";
+        stage.className = isGrayscale ? "grayscale-ink" : "";
+
+        // 若啟用注音模式，等待芫荽注音體載入完畢以確保 Canvas 渲染正確
+        if (appState.enableZhuyinMode && document.fonts && document.fonts.load) {
+          try {
+            await document.fonts.load("16px BpmfIansui");
+          } catch (e) {
+            console.warn("注音字體預載提示:", e);
+          }
+        }
+        const pdfFontFamily = appState.enableZhuyinMode
+          ? "'BpmfIansui', 'Noto Sans TC', sans-serif"
+          : "'Noto Sans TC', sans-serif";
+        const pdfLineHeight = appState.enableZhuyinMode ? "2.15" : "1.9";
+
+        if (layoutType === "landscape-book") {
+          // 板型 A：A4 橫向繪本讀本 (含封面 + 閱讀前導讀 + 各頁跨頁 + 讀後回顧)
+          const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+          const slidesHtml = [];
+
+          // 封面與課前導讀頁
+          slidesHtml.push(`
+            <div style="width:1120px;height:790px;padding:48px;background:#FDFBF7;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;font-family:${pdfFontFamily};box-sizing:border-box;">
+              <div style="height:100%;display:flex;align-items:center;justify-content:center;">
+                <img src="${appState.coverData.imageDataUrl}" style="width:100%;height:660px;object-fit:cover;border-radius:18px;border:2px solid #E6E0D6;" />
+              </div>
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:20px;">
+                <div style="color:#5F7A61;font-weight:700;font-size:18px;">${escapeHtml(appState.coverData.subtitle || '教學有聲繪本讀本')}</div>
+                <h1 style="font-size:42px;margin:0;color:#2C302E;line-height:1.45;">${escapeHtml(appState.coverData.title)}</h1>
+                <div style="font-size:20px;color:#686D6A;">指導教師：${escapeHtml(appState.coverData.author)}</div>
+                <div style="margin-top:24px;padding:24px;background:#F4EFE6;border-radius:16px;border-left:6px solid #C86D51;">
+                  <div style="font-weight:700;font-size:18px;color:#C86D51;margin-bottom:8px;">🌱 閱讀前・暖身預測 (Pre-Reading)</div>
+                  <div style="font-size:16px;line-height:${pdfLineHeight};color:#2C302E;">請觀察左方的封面插圖，猜猜看主角是誰？在這趟故事旅程中可能會發生什麼事情？</div>
+                </div>
+              </div>
+            </div>
+          `);
+
+          // 各內頁跨頁
+          appState.pages.forEach((p, idx) => {
+            slidesHtml.push(`
+              <div style="width:1120px;height:790px;padding:48px;background:#FDFBF7;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;font-family:${pdfFontFamily};box-sizing:border-box;">
+                <div style="height:100%;display:flex;align-items:center;justify-content:center;">
+                  <img src="${p.imageDataUrl}" style="width:100%;height:660px;object-fit:cover;border-radius:18px;border:2px solid #E6E0D6;" />
+                </div>
+                <div style="height:660px;display:flex;flex-direction:column;justify-content:space-between;">
+                  <div style="display:flex;justify-content:space-between;border-bottom:2px solid #E6E0D6;padding-bottom:12px;">
+                    <span style="color:#5F7A61;font-weight:700;font-size:18px;">${escapeHtml(p.pageGoal)}</span>
+                    <span style="color:#686D6A;font-weight:700;font-size:18px;">Page ${idx + 1}</span>
+                  </div>
+                  <div style="white-space:pre-line;font-size:24px;line-height:${pdfLineHeight};color:#2C302E;margin:auto 0;">${escapeHtml(p.storyText)}</div>
+                  <div style="padding:18px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;font-size:16px;line-height:${pdfLineHeight};color:#2C302E;">
+                    <strong style="color:#B0583E;">💬 閱讀中・思考提問：</strong>${escapeHtml(p.pedagogicalPrompt || '')}
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+
+          for (let i = 0; i < slidesHtml.length; i++) {
+            stage.innerHTML = slidesHtml[i];
+            await new Promise(r => setTimeout(r, 120));
+            const canvas = await html2canvas(stage.firstElementChild, { scale: 1.5, useCORS: true });
+            const imgData = canvas.toDataURL("image/jpeg", 0.92);
+            if (i > 0) pdf.addPage();
+            pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+          }
+
+          pdf.save(`${appState.bookTitle}_A4繪本讀本.pdf`);
+        } else {
+          // 板型 B：A4 直向素養學習單（等比例排版，超出標準 A4 高度時自動分頁為多頁 A4 呈現，絕不擠壓單頁）
+          const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+          const allWords = [];
+          appState.pages.forEach(p => (p.clozeKeywords || []).forEach(w => {
+            if (!allWords.includes(w)) allWords.push(w);
+          }));
+
+          // 標準 A4 直向等比例畫布尺寸：寬 794px，單頁固定高 1123px (210mm : 297mm)
+          const PAGE_W = 794;
+          const PAGE_H = 1123;
+          const PAD_X = 40;
+          const PAD_Y = 40;
+          const MAX_CONTENT_H = PAGE_H - PAD_Y * 2; // 1043px 單頁可用內容高度
+
+          // 1. 建立高度測量容器，將各題塊與表頭、結尾轉為獨立元素以利自動分頁
+          const measureContainer = document.createElement("div");
+          measureContainer.style.cssText = `width:${PAGE_W - PAD_X * 2}px;font-family:${pdfFontFamily};color:#2C302E;box-sizing:border-box;`;
+          stage.innerHTML = "";
+          stage.appendChild(measureContainer);
+
+          const blocksHtml = [];
+
+          // 區塊 0：第一頁表頭與參考詞彙庫
+          blocksHtml.push(`
+            <div class="ws-block" style="margin-bottom:16px;">
+              <div style="border-bottom:3px solid #2C302E;padding-bottom:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;">
+                <div>
+                  <div style="font-size:13px;color:#686D6A;">《${escapeHtml(appState.bookTitle)}》閱讀理解與素養學習單</div>
+                  <h1 style="font-size:26px;margin:6px 0 0 0;line-height:1.4;">${escapeHtml(appState.bookTitle)}</h1>
+                </div>
+                <div style="font-size:13px;white-space:nowrap;">班級：______ 座號：___ 姓名：__________ 得分：____</div>
+              </div>
+              ${allWords.length > 0 ? `
+                <div style="padding:12px 16px;background:#F4EFE6;border:1px solid #E6E0D6;border-radius:10px;font-size:14px;line-height:${appState.enableZhuyinMode ? '2.1' : '1.7'};">
+                  <strong>📚 參考詞彙庫 (Word Bank)：</strong> ${allWords.map(w => `<span style="display:inline-block;padding:2px 10px;margin:3px 4px;background:#FFF;border:1px solid #CCC;border-radius:99px;">${escapeHtml(w)}</span>`).join("")}
+                </div>
+              ` : ``}
+            </div>
+          `);
+
+          // 區塊 1..N：每一幕的圖文克漏字與思考題
+          appState.pages.forEach((p, idx) => {
+            let textHtml = escapeHtml(p.storyText);
+            (p.clozeKeywords || []).forEach(kw => {
+              const safeKw = escapeHtml(kw);
+              textHtml = textHtml.replace(safeKw, `<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>`);
+            });
+            blocksHtml.push(`
+              <div class="ws-block" style="display:grid;grid-template-columns:165px 1fr;gap:18px;padding:14px;border:1px solid #E6E0D6;border-radius:12px;margin-bottom:14px;align-items:center;background:#FFFFFF;box-sizing:border-box;">
+                <img src="${p.imageDataUrl}" style="width:165px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #E6E0D6;" />
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#5F7A61;margin-bottom:6px;">第 ${idx + 1} 幕・${escapeHtml(p.pageGoal)}</div>
+                  <div style="white-space:pre-line;font-size:15px;line-height:${appState.enableZhuyinMode ? '2.15' : '1.75'};color:#2C302E;">${textHtml}</div>
+                  <div style="margin-top:8px;font-size:13px;line-height:${appState.enableZhuyinMode ? '2.0' : '1.6'};color:#B0583E;"><strong>💬 思考題：</strong>${escapeHtml(p.pedagogicalPrompt || '')}</div>
+                </div>
+              </div>
+            `);
+          });
+
+          // 區塊 N+1：閱讀後自我檢核表尾
+          blocksHtml.push(`
+            <div class="ws-block" style="margin-top:8px;padding:14px 16px;background:#F9FAFB;border:1px solid #E6E0D6;border-radius:10px;font-size:13px;line-height:${appState.enableZhuyinMode ? '2.0' : '1.6'};display:flex;justify-content:space-between;align-items:center;">
+              <span><strong>✅ 閱讀後自我檢核：</strong> □ 我能讀懂故事內容 &nbsp;&nbsp; □ 我能完成詞彙填空 &nbsp;&nbsp; □ 我能與同學分享想法</span>
+              <span>指導教師：${escapeHtml(appState.author)}</span>
+            </div>
+          `);
+
+          measureContainer.innerHTML = blocksHtml.join("");
+          await new Promise(r => setTimeout(r, 150));
+
+          // 2. 測量每個區塊實際像素高度，超過單頁 A4 容量即自動分頁
+          const blockNodes = Array.from(measureContainer.querySelectorAll(".ws-block"));
+          const pagesBuckets = [];
+          let currentBucket = [];
+          let currentHeight = 0;
+
+          blockNodes.forEach((node) => {
+            const h = node.offsetHeight + 14; // 含間距高度
+            // 若當前頁已有內容且加入此題會超出單頁 A4 可用高度 (預留 32px 頁碼空間)，則推入新的一頁 A4
+            if (currentBucket.length > 0 && (currentHeight + h > MAX_CONTENT_H - 32)) {
+              pagesBuckets.push(currentBucket);
+              currentBucket = [node.outerHTML];
+              currentHeight = h + 36; // 續頁頂部小標頭高度
+            } else {
+              currentBucket.push(node.outerHTML);
+              currentHeight += h;
+            }
+          });
+          if (currentBucket.length > 0) {
+            pagesBuckets.push(currentBucket);
+          }
+
+          // 3. 逐頁以固定 A4 等比例尺寸 (794px × 1123px) 渲染並寫入多頁 PDF
+          const totalSheetPages = pagesBuckets.length;
+          for (let pIdx = 0; pIdx < totalSheetPages; pIdx++) {
+            const isContPage = pIdx > 0;
+            const contHeader = isContPage ? `
+              <div style="border-bottom:1px solid #E6E0D6;padding-bottom:8px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:12px;color:#686D6A;">
+                <span>《${escapeHtml(appState.bookTitle)}》閱讀理解與素養學習單（續頁）</span>
+                <span>姓名：____________</span>
+              </div>
+            ` : ``;
+
+            stage.innerHTML = `
+              <div style="width:${PAGE_W}px;height:${PAGE_H}px;padding:${PAD_Y}px ${PAD_X}px;background:#FFFFFF;font-family:${pdfFontFamily};box-sizing:border-box;color:#2C302E;display:flex;flex-direction:column;justify-content:space-between;">
+                <div>
+                  ${contHeader}
+                  ${pagesBuckets[pIdx].join("")}
+                </div>
+                <div style="text-align:center;font-size:12px;color:#686D6A;padding-top:8px;border-top:1px dashed #E6E0D6;">
+                  第 ${pIdx + 1} / ${totalSheetPages} 頁
+                </div>
+              </div>
+            `;
+
+            await new Promise(r => setTimeout(r, 120));
+            const canvas = await html2canvas(stage.firstElementChild, {
+              scale: 1.5,
+              useCORS: true,
+              width: PAGE_W,
+              height: PAGE_H,
+              windowWidth: PAGE_W,
+              windowHeight: PAGE_H
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 0.92);
+            if (pIdx > 0) pdf.addPage();
+            pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+          }
+
+          pdf.save(`${appState.bookTitle}_素養教學學習單.pdf`);
+        }
+
+        closePdfModal();
+        showToast("✅ 印刷級教學設計 PDF 已下載完成！");
+      } catch (err) {
+        console.error("PDF 生成錯誤:", err);
+        showToast("PDF 產生失敗，請稍後再試");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    }
+  </script>
 </body>
 </html>
